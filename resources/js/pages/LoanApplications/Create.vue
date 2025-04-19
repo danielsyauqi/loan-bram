@@ -1089,7 +1089,7 @@ const redirectToIndex = () => {
                             </div>
                         </div>
 
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center mt-4 ">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
                                     </svg>

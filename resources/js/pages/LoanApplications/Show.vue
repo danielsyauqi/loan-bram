@@ -20,10 +20,9 @@ import axios from 'axios';
 
 // Ensure correct typing for usePage - simplified
 const page = usePage<SharedData>();
-const user = computed(() => page.props.auth?.user);
 
 // Get user role from the auth user object
-const userRole = computed(() => (user.value as any)?.role || 'user');
+const userRole = computed(() => (page.props.auth?.user as any)?.role || 'user');
 
 
 // Register components
@@ -204,92 +203,6 @@ function debounce<T extends (...args: any[]) => void>(
     };
 }
 
-// Inside the script setup section, add this code after the form declaration
-const isAutoSaving = ref(false);
-const lastAutoSaveStatus = ref<'success' | 'error' | null>(null);
-
-// Auto-save function for document checklist
-const autoSaveDocumentChecklist = debounce((value: string[]) => {
-    isAutoSaving.value = true;
-    lastAutoSaveStatus.value = null;
-    
-    axios.patch(route('loan-modules.applications.autoSave', {
-        moduleSlug: props.module.slug,
-        applicationId: props.application.id
-    }), {
-        document_checklist: value
-    })
-    .then(response => {
-        isAutoSaving.value = false;
-        lastAutoSaveStatus.value = 'success';
-        // Show a toast notification if needed
-        if (props.autosaveNotifications) {
-            showToastNotification('Document checklist auto-saved successfully', 'success');
-        }
-    })
-    .catch(error => {
-        isAutoSaving.value = false;
-        lastAutoSaveStatus.value = 'error';
-        console.error('Auto-save error:', error);
-        showToastNotification('Failed to auto-save document checklist', 'error');
-    });
-}, 1000, 'document_checklist');
-
-// Auto-save function for agent selection
-const autoSaveAgent = debounce((value: string) => {
-    isAutoSaving.value = true;
-    lastAutoSaveStatus.value = null;
-    
-    axios.patch(route('loan-modules.applications.autoSave', {
-        moduleSlug: props.module.slug,
-        applicationId: props.application.id
-    }), {
-        agent_id: value
-    })
-    .then(response => {
-        isAutoSaving.value = false;
-        lastAutoSaveStatus.value = 'success';
-        // Show a toast notification if needed
-        if (props.autosaveNotifications) {
-            showToastNotification('Agent selection auto-saved successfully', 'success');
-        }
-    })
-    .catch(error => {
-        isAutoSaving.value = false;
-        lastAutoSaveStatus.value = 'error';
-        console.error('Auto-save error:', error);
-        showToastNotification('Failed to auto-save agent selection', 'error');
-    });
-}, 1000, 'agent_id');
-
-// Auto-save function for loan details
-const autoSaveField = debounce((fieldName: string, value: any) => {
-    isAutoSaving.value = true;
-    lastAutoSaveStatus.value = null;
-    
-    // Create payload with only the specific field
-    const payload: Record<string, any> = {};
-    payload[fieldName] = value;
-    
-    axios.patch(route('loan-modules.applications.autoSave', {
-        moduleSlug: props.module.slug,
-        applicationId: props.application.id
-    }), payload)
-    .then(response => {
-        isAutoSaving.value = false;
-        lastAutoSaveStatus.value = 'success';
-        // Show a toast notification if needed
-        if (props.autosaveNotifications) {
-            showToastNotification(`${fieldName.replace('_', ' ')} auto-saved successfully`, 'success');
-        }
-    })
-    .catch(error => {
-        isAutoSaving.value = false;
-        lastAutoSaveStatus.value = 'error';
-        console.error('Auto-save error:', error);
-        showToastNotification(`Failed to auto-save ${fieldName.replace('_', ' ')}`, 'error');
-    });
-}, 1000, 'field_autosave');
 
 // Function to show toast notifications
 const showToastNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -298,97 +211,6 @@ const showToastNotification = (message: string, type: 'success' | 'error' | 'inf
     showToast.value = true;
 };
 
-// Watch for changes to auto-save fields
-watch(() => form.document_checklist, (newValue) => {
-    if (newValue && props.application?.id) {
-        autoSaveDocumentChecklist(newValue);
-    }
-}, { deep: true });
-
-watch(() => form.agent_id, (newValue) => {
-    if (newValue && props.application?.id) {
-        autoSaveAgent(newValue);
-    }
-});
-
-// Watch individual loan detail fields
-watch(() => form.product_id, (newValue) => {
-    if (props.application?.id) {
-        autoSaveField('product_id', newValue);
-    }
-});
-
-watch(() => form.rates, (newValue) => {
-    if (props.application?.id) {
-        autoSaveField('rates', newValue);
-    }
-});
-
-watch(() => form.biro, (newValue) => {
-    if (props.application?.id) {
-        autoSaveField('biro', newValue);
-    }
-});
-
-watch(() => form.banca, (newValue) => {
-    if (props.application?.id) {
-        autoSaveField('banca', newValue);
-    }
-});
-
-watch(() => form.tenure_applied, (newValue) => {
-    if (props.application?.id) {
-        autoSaveField('tenure_applied', newValue);
-    }
-});
-
-watch(() => form.date_received, (newValue) => {
-    if (props.application?.id) {
-        autoSaveField('date_received', newValue);
-    }
-});
-
-watch(() => form.amount_applied, (newValue) => {
-    if (props.application?.id) {
-        autoSaveField('amount_applied', newValue);
-    }
-});
-
-watch(() => form.amount_approved, (newValue) => {
-    if (props.application?.id) {
-        autoSaveField('amount_approved', newValue);
-    }
-});
-
-watch(() => form.amount_disbursed, (newValue) => {
-    if (props.application?.id) {
-        autoSaveField('amount_disbursed', newValue);
-    }
-});
-
-watch(() => form.tenure_approved, (newValue) => {
-    if (props.application?.id) {
-        autoSaveField('tenure_approved', newValue);
-    }
-});
-
-watch(() => form.date_approved, (newValue) => {
-    if (props.application?.id) {
-        autoSaveField('date_approved', newValue);
-    }
-});
-
-watch(() => form.date_disbursed, (newValue) => {
-    if (props.application?.id) {
-        autoSaveField('date_disbursed', newValue);
-    }
-});
-
-watch(() => form.date_rejected, (newValue) => {
-    if (props.application?.id) {
-        autoSaveField('date_rejected', newValue);
-    }
-});
 
 // Form submission with enhanced validation
 const submitForm = () => {
@@ -839,51 +661,60 @@ const getSortedWorkflowRemarks = () => {
   });
 };
 
-console.log(props.allModules);
 
-//Module selection
-const selectedModule = ref('');
+// Refactored saveApplication function for clarity and flexibility
+const saveApplication = (field = null, value = null) => {
+    // Prepare the payload
+    let data: Record<string, any> = {};
 
-const getSelectedModule = () => {
-    return props.allModules.find((module: any) => module.id === form.module_id);
-};
+    if (field && value !== null) {
+        // Save a single field (inline/auto-save)
+        data[field] = value;
+        // If the field is document_checklist, ensure it's always sent as an array
+        if (field === 'document_checklist') {
+            data['document_checklist'] = Array.isArray(value) ? value : [value];
+        }
+    } else {
+        // Save all fields (full form save)
+        data = {
+            rates: form.rates,
+            biro: form.biro,
+            banca: form.banca,
+            tenure_applied: form.tenure_applied,
+            date_received: form.date_received,
+            amount_applied: form.amount_applied,
+            amount_approved: form.amount_approved,
+            amount_disbursed: form.amount_disbursed,
+            tenure_approved: form.tenure_approved,
+            date_approved: form.date_approved,
+            date_disbursed: form.date_disbursed,
+            date_rejected: form.date_rejected,
+            product_id: form.product_id,
+            document_checklist: form.document_checklist,
+        };
+    }
 
-// Auto-save function for module selection
-const handleModuleSelection = () => {
-    isAutoSaving.value = true;
-    lastAutoSaveStatus.value = null;
-    
-    axios.patch(route('loan-modules.applications.module.autoSave', {
+    // POST to the backend
+    axios.post(route('loan-modules.applications.saveApplication', {
         moduleSlug: props.module.slug,
         applicationId: props.application.id
-    }), {
-        module_id: form.module_id
-    })
+    }), data)
     .then(response => {
-        isAutoSaving.value = false;
-        lastAutoSaveStatus.value = 'success';
-        
-        // Show a toast notification if needed
-        if (props.autosaveNotifications) {
-            showToastNotification('Module selection auto-saved successfully', 'success');
-        }
-        
-        // Get the selected module's information using the existing getSelectedModule function
-        const selectedModule = getSelectedModule();
-        
-        // Redirect to the loan application show page with the new module
-        if (selectedModule) {
-            window.location.href = route('loan-modules.applications.show', {
-                moduleSlug: selectedModule.slug,
-                referenceId: props.application.reference_id
-            });
+        if (response.data.success) {
+            toastMessage.value = 'Changes saved successfully';
+            toastType.value = 'success';
+            showToast.value = true;
+        } else {
+            toastMessage.value = response.data.message || 'Failed to save changes';
+            toastType.value = 'error';
+            showToast.value = true;
         }
     })
     .catch(error => {
-        isAutoSaving.value = false;
-        lastAutoSaveStatus.value = 'error';
-        console.error('Auto-save error:', error);
-        showToastNotification('Failed to auto-save module selection', 'error');
+        console.error('Error saving application:', error);
+        toastMessage.value = 'Failed to save changes';
+        toastType.value = 'error';
+        showToast.value = true;
     });
 };
 
@@ -931,7 +762,6 @@ const handleModuleSelection = () => {
                                 v-model="form.module_id"
                                 id="module_id" 
                                 name="module_id"
-                                @change="handleModuleSelection"
                                 class="px-2 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
                                 :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.module_id }"
                             >
@@ -1216,12 +1046,6 @@ const handleModuleSelection = () => {
                                     </svg>
                                     Loan Details
                                 </h3>
-                                <span v-if="isAutoSaving" class="text-xs text-gray-500 dark:text-gray-400 animate-pulse">
-                                    Auto-saving...
-                                </span>
-                                <span v-else-if="lastAutoSaveStatus === 'success'" class="text-xs text-green-500 dark:text-green-400">
-                                    Saved
-                                </span>
                             </div>
                                 
                                 <!-- Add your loan application form fields here -->
@@ -1714,7 +1538,7 @@ const handleModuleSelection = () => {
                                                     <option value="Disbursed">Disbursed</option>
                                                     <option value="Rejected">Rejected</option>
                                                     <option value="Ready to Submit">Ready to Submit</option>
-                                                    <option value="Process">Process</option>
+                                                    <option value="Processing">Processing</option>
                                                     <option value="Pending@Agency">Pending@Agency</option>
                                                     <option value="Pending@Bank">Pending@Bank</option>
                                                     <option value="Delete Request">Delete Request</option>
@@ -1812,12 +1636,7 @@ const handleModuleSelection = () => {
                             <label for="agent_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Select Master Agent
                             </label>
-                                <span v-if="isAutoSaving" class="text-xs text-gray-500 dark:text-gray-400 animate-pulse">
-                                    Auto-saving...
-                                </span>
-                                <span v-else-if="lastAutoSaveStatus === 'success'" class="text-xs text-green-500 dark:text-green-400">
-                                    Saved
-                                </span>
+    
                             </div>
                             <div class="mt-1">
                                 <select 
@@ -1851,12 +1670,6 @@ const handleModuleSelection = () => {
                     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 h-fit">
                         <div class="flex justify-between items-center mb-4">
                             <h2 class="text-xl font-semibold text-gray-800 dark:text-white">Document Checklist</h2>
-                            <span v-if="isAutoSaving" class="text-xs text-gray-500 dark:text-gray-400 animate-pulse">
-                                Auto-saving...
-                            </span>
-                            <span v-else-if="lastAutoSaveStatus === 'success'" class="text-xs text-green-500 dark:text-green-400">
-                                Saved
-                            </span>
                         </div>
                         
                         <ul class="space-y-3">
@@ -1925,6 +1738,16 @@ const handleModuleSelection = () => {
                             </li>
                         </ul>
                     </div> 
+
+                    <div class="mt-6 flex justify-end">
+                        <button 
+                            type="button" 
+                            @click="saveApplication()" 
+                            class="shadow-lg w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                        >
+                            Save
+                        </button>
+                    </div>
                 </div>
                 
             </div>

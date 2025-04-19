@@ -159,7 +159,7 @@ const passwordForm = useForm({
     current_password: '',
     password: '',
     password_confirmation: '',
-    _method: 'PATCH',
+    _method: 'POST',
 });
 
 // Check password requirements

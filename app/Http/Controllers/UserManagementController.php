@@ -12,6 +12,7 @@ use App\Models\LoanApplications;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Models\Notification;
 
 class UserManagementController extends Controller
 {
@@ -294,6 +295,12 @@ class UserManagementController extends Controller
         if ($user->address) {
             $user->address->delete();
         }
+
+        //Delete notification
+        Notification::where('receiver_id', $user->id)->orWhere('sender_id', $user->id)->delete();
+
+        //Delete loan application
+        LoanApplications::where('agent_id', $user->id)->orWhere('customer_id', $user->id)->delete();
         
         // Delete user
         $user->delete();

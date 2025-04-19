@@ -374,7 +374,7 @@ const performDelete = () => {
                     </div>
                     
                     <!-- New Application Button -->
-                    <Link 
+                    <Link v-if="props.isAdmin"
                         :href="`/loan-modules/${module.slug}/applications/create`"
                         class="flex items-center justify-center w-full sm:w-auto gap-1 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
                     >

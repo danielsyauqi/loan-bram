@@ -751,7 +751,7 @@ onMounted(() => {
                                         <div class="text-sm font-medium text-gray-900 dark:text-white">{{ currentSubAgent?.name || 'Not assigned' }} (Sub Agent)</div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ currentSubAgent?.email }}</div>
 
-                                        <div v-if="!application.agent_id || !application.sub_agent_id" class="mt-2">
+                                        <div v-if="!application.agent_id || !application.sub_agent_id && userRole === 'agent'" class="mt-2">
                                             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                                                 <select 
                                                     v-model="selectedSubAgent" 

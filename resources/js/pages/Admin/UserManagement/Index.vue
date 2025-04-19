@@ -281,6 +281,7 @@ const cancelDelete = () => {
                                 <option value="admin">Admin</option>
                                 <option value="agent">Agent</option>
                                 <option value="customer">Customer</option>
+                                <option value="sub agent">Sub Agent</option>
                             </select>
                         </div>
                     </div>
@@ -343,9 +344,16 @@ const cancelDelete = () => {
                             <div>
                                 <span class="text-gray-500 dark:text-gray-400">Role:</span>
                                 <div>
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getRoleBadgeClass(user.role)">
-                                        {{ user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '' }}
-                                    </span>
+                                    <div v-if="user.role === 'sub agent'">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getRoleBadgeClass(user.role)">
+                                            {{ user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1, 4) + (user.role.length > 4 ? user.role.charAt(4).toUpperCase() + user.role.slice(5) : '') : '' }}
+                                        </span>
+                                    </div>
+                                    <div v-else>
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getRoleBadgeClass(user.role)">
+                                            {{ user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '' }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                             <div>
@@ -412,9 +420,16 @@ const cancelDelete = () => {
                                     <div class="text-sm text-gray-900 dark:text-white">{{ user.phone_num }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getRoleBadgeClass(user.role)">
-                                        {{ user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1, 4) + (user.role.length > 4 ? user.role.charAt(4).toUpperCase() + user.role.slice(5) : '') : '' }}
-                                    </span>
+                                    <div v-if="user.role === 'sub agent'">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getRoleBadgeClass(user.role)">
+                                            {{ user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1, 4) + (user.role.length > 4 ? user.role.charAt(4).toUpperCase() + user.role.slice(5) : '') : '' }}
+                                        </span>
+                                    </div>
+                                    <div v-else>
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getRoleBadgeClass(user.role)">
+                                            {{ user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '' }}
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getStatusBadgeClass(user.status)">

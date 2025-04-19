@@ -146,11 +146,11 @@ class DashboardController extends Controller
             return [
                 'id' => $application->id,
                 'customer' => $application->customer->name,
-                'module' => $application->module->name,
-                'product' => $application->product->name,
-                'amount' => $application->amount_applied,
-                'status' => $application->status,
-                'date' => $application->created_at,
+                'module' => $application->module->name ?? '',
+                'product' => $application->product->name ?? '',
+                'amount' => $application->amount_applied ?? 0,
+                'status' => $application->status ?? '',
+                'date' => $application->created_at ?? '',
             ];
         });
 
@@ -175,9 +175,13 @@ class DashboardController extends Controller
         ->whereYear('created_at', now()->subYear()->year)
         ->sum('amount_disbursed');
 
-        $compareDisbursedLastYearPercentage = ($totalLoanDisbursed - $compareDisbursedLastYear) / $compareDisbursedLastYear * 100;
 
+        if($compareDisbursedLastYear === 0) {
+            $compareDisbursedLastYearPercentage = 0; // Avoid division by zero
+        }else{
+            $compareDisbursedLastYearPercentage = ($totalLoanDisbursed - $compareDisbursedLastYear) / $compareDisbursedLastYear * 100;
 
+        }
 
 
         return Inertia::render('Dashboard', [

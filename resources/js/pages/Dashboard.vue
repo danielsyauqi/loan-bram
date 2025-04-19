@@ -35,24 +35,90 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
-const props = defineProps<{
-  monthlyDisbursed: number[];
-  topModules: any[];
-  recentApplications: any[];
-  recentNotification: any[];
-  totalLoanApplications: number;
-  weekLoanApplications: number;
-  weekLoanActive: number;
-  weekLoanDisbursed: number;
-  totalLoanActive: number;
-  totalLoanPending: number;
-  totalLoanRejected: number;
-  totalLoanApproved: number;
-  totalLoanDisbursed: string;
-  totalCustomers: number;
-  weekTotalCustomers: number;
-  compareDisbursedLastYearPercentage: number;
-}>();
+const props = defineProps({
+  monthlyDisbursed: {
+    type: Array as () => number[],
+    default: () => [0, 25000, 32000, 38000, 42000, 48000, 53000, 58000, 63000, 72000, 85000, 92000, 98000]
+  },
+  topModules: {
+    type: Array,
+    default: () => [
+      { name: 'Personal Loan', applications: 245, growth: 12, image: 'images/module-personal.jpg' },
+      { name: 'Business Loan', applications: 187, growth: 8, image: 'images/module-business.jpg' },
+      { name: 'Home Financing', applications: 164, growth: -3, image: 'images/module-home.jpg' },
+      { name: 'Auto Financing', applications: 132, growth: 5, image: 'images/module-auto.jpg' },
+      { name: 'Education Loan', applications: 98, growth: 2, image: 'images/module-education.jpg' }
+    ]
+  },
+  recentApplications: {
+    type: Array,
+    default: () => [
+      { id: 1, customer: 'Jane Smith', module: 'Personal Loan', product: 'Quick Cash', amount: '15000', status: 'approved', date: new Date().toISOString() },
+      { id: 2, customer: 'John Doe', module: 'Business Loan', product: 'SME Growth', amount: '50000', status: 'pending', date: new Date().toISOString() },
+      { id: 3, customer: 'Ahmad Abdullah', module: 'Home Financing', product: 'Home Purchase', amount: '350000', status: 'processing', date: new Date().toISOString() },
+      { id: 4, customer: 'Lisa Wong', module: 'Auto Financing', product: 'New Vehicle', amount: '80000', status: 'rejected', date: new Date().toISOString() },
+      { id: 5, customer: 'Michael Chen', module: 'Education Loan', product: 'Graduate Studies', amount: '40000', status: 'disbursed', date: new Date().toISOString() }
+    ]
+  },
+  recentNotification: {
+    type: Array,
+    default: () => [
+      { id: 1, title: 'New Loan Application', description: 'A new loan application has been submitted by John Doe', role: 'admin', created_at: new Date().toISOString() },
+      { id: 2, title: 'Loan Approved', description: 'The loan application for Jane Smith has been approved', role: 'agent', created_at: new Date().toISOString() },
+      { id: 3, title: 'Pending Verification', description: 'Customer documents require verification for Ahmad Abdullah', role: 'sub agent', created_at: new Date().toISOString() },
+      { id: 4, title: 'System Update', description: 'System maintenance scheduled for tonight at 2AM', role: 'all', created_at: new Date().toISOString() },
+      { id: 5, title: 'Disbursement Completed', description: 'Funds have been successfully disbursed for Lisa Wong', role: 'customer', created_at: new Date().toISOString() }
+    ]
+  },
+  totalLoanApplications: {
+    type: Number,
+    default: 826
+  },
+  weekLoanApplications: {
+    type: Number,
+    default: 24
+  },
+  weekLoanActive: {
+    type: Number,
+    default: 15
+  },
+  weekLoanDisbursed: {
+    type: Number,
+    default: 120000
+  },
+  totalLoanActive: {
+    type: Number,
+    default: 475
+  },
+  totalLoanPending: {
+    type: Number,
+    default: 125
+  },
+  totalLoanRejected: {
+    type: Number,
+    default: 76
+  },
+  totalLoanApproved: {
+    type: Number,
+    default: 625
+  },
+  totalLoanDisbursed: {
+    type: String,
+    default: '2450000'
+  },
+  totalCustomers: {
+    type: Number,
+    default: 580
+  },
+  weekTotalCustomers: {
+    type: Number,
+    default: 18
+  },
+  compareDisbursedLastYearPercentage: {
+    type: Number,
+    default: 12.5
+  }
+});
 
 const totalLoanDisbursedNew = "RM " + formatNumberTwoDecimal(props.totalLoanDisbursed);
 const weekLoanDisbursedNew = "RM " + formatNumberTwoDecimal(props.weekLoanDisbursed);
@@ -538,15 +604,15 @@ onMounted(() => {
             </tr>
           </thead>
           <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <tr v-for="application in recentApplications" :key="application.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ application.customer }}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ application.module }}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ application.product }}</td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">RM {{ application.amount ?? 0}}</td>
+            <tr v-for="application in recentApplications" :key="(application as any).id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ (application as any).customer }}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ (application as any).module }}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ (application as any).product }}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">RM {{ (application as any).amount ?? 0}}</td>
           <td class="px-4 py-3 whitespace-nowrap">
-            <StatusBadge :status="application.status" />
+            <StatusBadge :status="(application as any).status" />
           </td>
-          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ new Date(application.date).toLocaleDateString() }}</td>
+          <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ new Date((application as any).date).toLocaleDateString() }}</td>
             </tr>
           </tbody>
         </table>
@@ -563,21 +629,21 @@ onMounted(() => {
         <div class="space-y-3 max-h-[400px] overflow-y-auto">
           <div v-for="(alert, index) in recentNotification" :key="index" 
              class="p-3 rounded-lg border-l-4 animate__animated animate__fadeInRight flex items-start"
-             :class="getRoleColor(alert.role)"
+             :class="getRoleColor((alert as any).role)"
              :style="{ animationDelay: index * 100 + 'ms' }">
           <div class="flex-shrink-0">
           </div>
           <div class="mb-3 ml-3 flex-1">
             <div class="flex items-center justify-between">
-              <h4 class="text-sm font-medium text-gray-800 dark:text-white">{{ alert.title }}</h4>
+              <h4 class="text-sm font-medium text-gray-800 dark:text-white">{{ (alert as any).title }}</h4>
               <div class="flex items-center">
-                <span class="text-xs text-gray-500 dark:text-gray-400 mr-2">{{ new Date(alert.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</span>
-                <span v-if="alert.role !== 'all'" class="inline-block px-2 py-0.5 text-xs rounded-full" :class="`bg-${alert.role}-100 text-${alert.role}-800 dark:bg-${alert.role}-900 dark:text-${alert.role}-100`">
-                  <RoleBadge :status="alert.role" size="sm" />
+                <span class="text-xs text-gray-500 dark:text-gray-400 mr-2">{{ new Date((alert as any).created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}</span>
+                <span v-if="(alert as any).role !== 'all'" class="inline-block px-2 py-0.5 text-xs rounded-full" :class="`bg-${(alert as any).role}-100 text-${(alert as any).role}-800 dark:bg-${(alert as any).role}-900 dark:text-${(alert as any).role}-100`">
+                  <RoleBadge :status="(alert as any).role" size="sm" />
                 </span>
               </div>
             </div>
-            <p class="text-xs mt-2 text-gray-600 dark:text-gray-300">{{ alert.description }}</p>
+            <p class="text-xs mt-2 text-gray-600 dark:text-gray-300">{{ (alert as any).description }}</p>
           </div>
         </div>
         
@@ -608,7 +674,7 @@ onMounted(() => {
                  :style="{ animationDelay: index * 100 + 'ms' }">
               <!-- Background fade image for each card -->
               <div class="absolute inset-0 opacity-5 dark:opacity-10 bg-repeat z-0 overflow-hidden rounded-lg">
-                <img :src="`../${module.image}`" class="w-full h-full object-contain" />
+                <img :src="`../${(module as any).image}`" class="w-full h-full object-contain" />
               </div>
               <div class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center shadow-sm z-10">
                 <span class="text-sm font-bold text-gray-700 dark:text-gray-300">#{{ index + 1 }}</span>
@@ -616,13 +682,13 @@ onMounted(() => {
               
               <!-- Module Header -->
               <div class="flex items-center mb-3 relative z-10">
-                <h4 class="font-semibold text-gray-800 dark:text-white">{{ module.name }}</h4>
+                <h4 class="font-semibold text-gray-800 dark:text-white">{{ (module as any).name }}</h4>
               </div>
               
               <!-- Application Count -->
               <div class="mb-3 relative z-10">
                 <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Applications</div>
-                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ formatNumber(module.applications) }}</div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ formatNumber((module as any).applications) }}</div>
               </div>
               
               <!-- Growth Indicator -->
@@ -630,12 +696,12 @@ onMounted(() => {
                 <div class="w-3/4 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5 overflow-hidden">
                   <div 
                     :class="`bg-green-500 h-full rounded-full`" 
-                    :style="`width: ${(module.applications / Math.max(...topModules.map(m => m.applications))) * 100}%`"
+                    :style="`width: ${((module as any).applications / Math.max(...topModules.map(m => (m as any).applications))) * 100}%`"
                   ></div>
                 </div>
-                <div :class="`flex items-center text-xs font-medium px-2 py-1 rounded-full ${module.growth >= 0 ? 'text-green-800 bg-green-100 dark:bg-green-900 dark:text-green-100' : 'text-red-800 bg-red-100 dark:bg-red-900 dark:text-red-100'}`">
-                  <component :is="module.growth >= 0 ? TrendingUp : TrendingDown" class="h-3 w-3 mr-1" />
-                  {{ module.growth > 0 ? '+' : '' }}{{ module.growth }}
+                <div :class="`flex items-center text-xs font-medium px-2 py-1 rounded-full ${(module as any).growth >= 0 ? 'text-green-800 bg-green-100 dark:bg-green-900 dark:text-green-100' : 'text-red-800 bg-red-100 dark:bg-red-900 dark:text-red-100'}`">
+                  <component :is="(module as any).growth >= 0 ? TrendingUp : TrendingDown" class="h-3 w-3 mr-1" />
+                  {{ (module as any).growth > 0 ? '+' : '' }}{{ (module as any).growth }}
                 </div>
               </div>
             </div>

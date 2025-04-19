@@ -222,7 +222,6 @@ const validateForm = () => {
     if (!form.city_employment) validationErrors.value.push('Company City is required');
     if (!form.state_employment) validationErrors.value.push('Company State is required');
     if (!form.zipcode_employment) validationErrors.value.push('Company Zip/Postal Code is required');
-    if (!form.country_employment) validationErrors.value.push('Company Country is required');
     
     // Salary Information validation
     if (!form.month) validationErrors.value.push('Salary Month is required');

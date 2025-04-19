@@ -622,17 +622,16 @@ class LoanApplicationController extends Controller
     /**
      * Auto-save specific fields of a loan application
      */
-    public function autoSave($moduleId, $applicationId, Request $request)
+    public function saveApplication($moduleId, $applicationId, Request $request)
     {
         try {
             // Find the application
             $application = LoanApplications::findOrFail($applicationId);
             
             // Validate the request
-            $request->validate([
+            $validator = $request->validate([
                 'agent_id' => 'nullable|exists:users,id',
                 'document_checklist' => 'nullable|array',
-                'product_id' => 'nullable|exists:products,id',
                 'rates' => 'nullable|numeric',
                 'biro' => 'nullable|string',
                 'banca' => 'nullable|string',
@@ -645,80 +644,53 @@ class LoanApplicationController extends Controller
                 'date_approved' => 'nullable|date',
                 'date_disbursed' => 'nullable|date',
                 'date_rejected' => 'nullable|date',
+                'product_id' => 'nullable|exists:products,id',
+                'fields' => 'nullable|array',
             ]);
             
-            // Update only the specified fields
-            if ($request->has('agent_id')) {
-                $application->agent_id = $request->agent_id;
-
-                //Notification for agent 
-                $notification = new Notification();
-                $notification->sender_id = Auth::user()->id;
-                $notification->receiver_id = $request->agent_id;
-                $notification->status = 'unread';
-                $notification->reference_id = $application->reference_id;
-                $notification->message = 'You have been assigned as Master Agent for loan application #' . $application->reference_id;
-                $notification->save();
+            // Get all validated fields that are present in the request
+            $fieldsToUpdate = $request->only([
+                'rates', 'biro', 'banca', 'tenure_applied', 'date_received',
+                'amount_applied', 'amount_approved', 'amount_disbursed',
+                'tenure_approved', 'date_approved', 'date_disbursed', 'date_rejected', 'product_id'
+            ]);
+            
+            // If fields array is provided, process multiple fields at once
+            if ($request->has('fields') && is_array($request->fields)) {
+                foreach ($request->fields as $field => $value) {
+                    if (in_array($field, [
+                        'rates', 'biro', 'banca', 'tenure_applied', 'date_received',
+                        'amount_applied', 'amount_approved', 'amount_disbursed',
+                        'tenure_approved', 'date_approved', 'date_disbursed', 'date_rejected', 'product_id'
+                    ])) {
+                        $fieldsToUpdate[$field] = $value;
+                    }
+                }
             }
             
+            // Update the application with all available fields at once
+            $application->fill($fieldsToUpdate);
+            
+            // Handle special cases that need additional processing
             if ($request->has('document_checklist')) {
                 $application->document_checklist = json_encode($request->document_checklist);
             }
             
-            // Auto-save loan details
-            if ($request->has('product_id')) {
-                $application->product_id = $request->product_id;
+            // Handle agent assignment with notification
+            if ($request->has('agent_id') && $request->agent_id !== $application->agent_id) {
+                $application->agent_id = $request->agent_id;
+                
+                // Create notification for the newly assigned agent
+                if ($request->agent_id) {
+                    Notification::create([
+                        'sender_id' => Auth::user()->id,
+                        'receiver_id' => $request->agent_id,
+                        'status' => 'unread',
+                        'reference_id' => $application->reference_id,
+                        'message' => 'You have been assigned as Master Agent for loan application #' . $application->reference_id
+                    ]);
+                }
             }
-            
-            if ($request->has('rates')) {
-                $application->rates = $request->rates;
-            }
-            
-            if ($request->has('biro')) {
-                $application->biro = $request->biro;
-            }
-            
-            if ($request->has('banca')) {
-                $application->banca = $request->banca;
-            }
-            
-            if ($request->has('tenure_applied')) {
-                $application->tenure_applied = $request->tenure_applied;
-            }
-            
-            if ($request->has('date_received')) {
-                $application->date_received = $request->date_received;
-            }
-            
-            if ($request->has('amount_applied')) {
-                $application->amount_applied = $request->amount_applied;
-            }
-            
-            if ($request->has('amount_approved')) {
-                $application->amount_approved = $request->amount_approved;
-            }
-            
-            if ($request->has('amount_disbursed')) {
-                $application->amount_disbursed = $request->amount_disbursed;
-            }   
-
-            if ($request->has('tenure_approved')) {
-                $application->tenure_approved = $request->tenure_approved;
-            }   
-
-            if ($request->has('date_approved')) {
-                $application->date_approved = $request->date_approved;
-            }
-
-            if ($request->has('date_disbursed')) {
-                $application->date_disbursed = $request->date_disbursed;
-            }
-
-            if ($request->has('date_rejected')) {
-                $application->date_rejected = $request->date_rejected;
-            }
-            
-            
             
             $application->save();
             
@@ -755,6 +727,12 @@ class LoanApplicationController extends Controller
             
             // Delete related workflow remarks
             $application->workflowRemarks()->delete();
+
+            // Delete related notifications
+            $notifications = Notification::where('reference_id', $application->reference_id)->get();
+            foreach ($notifications as $notification) {
+                $notification->delete();
+            }
             
             // Delete the application
             $application->delete();
@@ -783,12 +761,13 @@ class LoanApplicationController extends Controller
             
             // Find the application
             $application = LoanApplications::findOrFail($applicationId);
-            
-            // Save moduleId for redirect
-            $module = LoanModules::findOrFail($application->module_id);
+
             
             // Delete related workflow remarks
-            $application->workflowRemarks()->delete();
+            $workflow_remarks = WorkflowRemarks::where('application_id', $application->id)->get();
+            foreach ($workflow_remarks as $workflow_remark) {
+                $workflow_remark->delete();
+            }
             
             // Delete the application
             $application->delete();

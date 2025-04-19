@@ -31,8 +31,7 @@ Route::get('loan-modules/{moduleSlug}/applications/{applicationId}/edit', [LoanA
 Route::post('loan-modules/{moduleSlug}/applications/{applicationId}/updateWorkflow/{workflowId}', [LoanApplicationController::class, 'updateWorkflow'])->middleware(['auth', 'verified'])->name('loan-modules.applications.updateWorkflow');
 Route::delete('loan-modules/{moduleSlug}/applications/{applicationId}/deleteWorkflow/{workflowId}', [LoanApplicationController::class, 'deleteWorkflow'])->middleware(['auth', 'verified'])->name('loan-modules.applications.deleteWorkflow');
 Route::post('loan-modules/{moduleSlug}/applications/{applicationId}/addWorkflow', [LoanApplicationController::class, 'addWorkflow'])->middleware(['auth', 'verified'])->name('loan-modules.applications.addWorkflow');
-Route::patch('loan-modules/{moduleSlug}/applications/{applicationId}/autoSave', [LoanApplicationController::class, 'autoSave'])->middleware(['auth', 'verified'])->name('loan-modules.applications.autoSave');
-Route::patch('loan-modules/{moduleSlug}/applications/{applicationId}/module/autoSave', [LoanApplicationController::class, 'autoSaveModule'])->middleware(['auth', 'verified'])->name('loan-modules.applications.module.autoSave');
+Route::post('loan-modules/{moduleSlug}/applications/{applicationId}/save', [LoanApplicationController::class, 'saveApplication'])->middleware(['auth', 'verified'])->name('loan-modules.applications.saveApplication');
 Route::post('loan-modules/{moduleSlug}/applications/{referenceId}/module/post', [LoanApplicationController::class, 'postModule'])->middleware(['auth', 'verified'])->name('loan-modules.applications.module.post');
 Route::get('new-application', [LoanApplicationController::class, 'newApplication'])->middleware(['auth', 'verified'])->name('new-application');
 

@@ -262,14 +262,15 @@ class CustomerController extends Controller
         $salary = Salaries::where('customer_id', $user->id)->first() ?? [];
         $redemption = Redemptions::where('customer_id', $user->id)->first() ?? [];
        
-        $loanStatus = null;
+        $loanStatus = false;
         $loanApplicationLatest = LoanApplications::where('customer_id', $user->id)->latest()->first();
 
         if($loanApplicationLatest){
-            if($loanApplicationLatest->status === 'Approved' || $loanApplicationLatest->status === 'Disbursed' || $loanApplicationLatest->status === 'Rejected'){
-                $loanStatus = true;
-            }else{
+            if($loanApplicationLatest->status === 'Processing' || $loanApplicationLatest->status === 'Pending' || $loanApplicationLatest->status === 'Pending@Agency' || $loanApplicationLatest->status === 'Pending@Bank' )
+            {
                 $loanStatus = false;
+            }else{
+                $loanStatus = true;
             }
         }else{
             $loanStatus = true;
@@ -679,6 +680,18 @@ class CustomerController extends Controller
         $workflow_remarks->status = 'Delete Request';
         $workflow_remarks->remarks = "Reason for delete request: " . $request->remark;
         $workflow_remarks->save();
+
+        foreach(User::where('role', 'Admin')->get() as $role){
+            Log::info('Notification excuted');
+            $notification = new Notification();
+            $notification->status = 'unread';
+            $notification->sender_id = Auth::user()->id;
+            $notification->receiver_id = $role->id;
+            $notification->reference_id = $application->id;
+            $notification->message = 'Delete request sent by '  . Auth::user()->username  . ' using reference ID #'  . $application->reference_id;
+            $notification->save();
+       
+        }
 
         return redirect()->route('customer.applications.index')
             ->with('flash', [

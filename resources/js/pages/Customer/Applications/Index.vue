@@ -98,7 +98,7 @@ const filteredApplications = computed(() => {
             if (statusFilter.value === 'disbursed' && app.status === 'Disbursed') return true;
             if (statusFilter.value === 'rejected' && app.status === 'Rejected') return true;
             if (statusFilter.value === 'ready_to_submit' && app.status === 'Ready to Submit') return true;
-            if (statusFilter.value === 'process' && app.status === 'Process') return true;
+            if (statusFilter.value === 'processing' && app.status === 'Processing') return true;
             if (statusFilter.value === 'delete_request' && app.status === 'Delete Request') return true;
             if (statusFilter.value === 'pending_agency' && app.status === 'Pending@Agency') return true;
             if (statusFilter.value === 'pending_bank' && app.status === 'Pending@Bank') return true;
@@ -133,9 +133,9 @@ const getStatusColor = (status: string) => {
             return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
         case 'Rejected':
             return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100';
-        case 'Ready to Submit':
+        case 'Ready to Submit': //
             return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100'; 
-        case 'Process':
+        case 'Processing':
             return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100';
         case 'Pending@Agency':
             return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-100';
@@ -171,7 +171,7 @@ const getApplicationStatus = (application: any): string => {
     if (application.status === 'Disbursed') return 'Disbursed';
     if (application.status === 'Rejected') return 'Rejected';
     if (application.status === 'Ready to Submit') return 'Ready to Submit';
-    if (application.status === 'Process') return 'Process';
+    if (application.status === 'Processing') return 'Processing';
     if (application.status === 'Pending@Agency') return 'Pending@Agency';
     if (application.status === 'Pending@Bank') return 'Pending@Bank';
     if (application.status === 'Delete Request') return 'Delete Request';

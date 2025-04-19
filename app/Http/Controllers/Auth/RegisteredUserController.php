@@ -37,7 +37,7 @@ class RegisteredUserController extends Controller
             'ic_number' => 'required|string|max:12',
             'phone' => 'required|string|max:12',
             'username' => 'required|string|max:255|unique:'.User::class,
-        ]);
+        ]); 
 
         $user = User::create([
             'name' => $request->name,
@@ -47,12 +47,17 @@ class RegisteredUserController extends Controller
             'ic_num' => $request->ic_number,
             'phone_num' => $request->phone, 
             'role' => 'customer',
+            'status' => 'not verified',
         ]);
 
         event(new Registered($user));
-        
-        return redirect()->route('dashboard')->with('flash', [
-            'success' => 'Registration successful! You can now log in with your credentials.'
-        ]);
+
+        Auth::login($user);
+
+        if ($user->hasRole('customer')) {
+            return redirect()->route('customer.dashboard');
+        } else {
+            return redirect()->route('dashboard');
+        }
     }
 }

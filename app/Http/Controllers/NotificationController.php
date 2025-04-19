@@ -277,7 +277,16 @@ class NotificationController extends Controller
     {
         $application = LoanApplications::where('reference_id', $referenceId)->first();
 
+        // Check if application exists before accessing its properties
+        if (!$application) {
+            return redirect()->route('loan-applications.list');
+        }
+        
         $module = LoanModules::where('id', $application->module_id)->first();
+
+        if (!$module) {
+            return redirect()->route('loan-applications.list');
+        }
 
         $notification = Notification::where('id', $notificationId)->first();
 

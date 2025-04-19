@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link, usePage, router } from '@inertiajs/vue3';
 import { ref, computed, onMounted, watch } from 'vue';
 import { MagnifyingGlassIcon, FunnelIcon } from '@heroicons/vue/24/solid';
 import { PlusIcon } from 'lucide-vue-next';
@@ -57,7 +57,7 @@ const props = defineProps<{
     edit: boolean;
     delete: boolean;
   };
-  moduleSlug: string;
+  moduleSlug: string; 
   flash?: {
     success?: string;
     referenceId?: string;
@@ -339,6 +339,14 @@ onMounted(() => {
     }
 });
 
+const goToReferenceId = (referenceId: string) => {
+  if(props.moduleSlug){
+    router.visit(route('loan-modules.applications.show', { moduleSlug: props.moduleSlug, referenceId: referenceId }));
+  }else{
+    router.visit(route('choose-module', {   referenceId: referenceId }));
+  }
+};
+
 </script>
 
 <template>
@@ -352,7 +360,7 @@ onMounted(() => {
         <div class="flex flex-col sm:flex-row gap-3">
           <Link
             v-if="canCreateApplication"
-            :href="route('loan-modules.applications.create', { moduleSlug: moduleSlug })"
+            :href="'/new-application/'"
             class="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             <PlusIcon class="w-4 h-4" />
@@ -471,8 +479,14 @@ onMounted(() => {
                     {{ formatDate(application.updated_at) }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link
-                      :href="route('loan-modules.applications.show', { moduleSlug: moduleSlug, referenceId: application.reference_id })"
+                    <Button v-if="props.isAdmin"
+                      @click="goToReferenceId(application.reference_id)"
+                      class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-4"
+                    >
+                      View
+                    </Button>
+                    <Link v-else
+                      :href="route('customer.application.show', { referenceNumber: application.reference_id })"
                       class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-4"
                     >
                       View
