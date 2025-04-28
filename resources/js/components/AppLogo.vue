@@ -4,17 +4,18 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
 
 <template>
     <div class="flex items-center gap-2">
-        <AppLogoIcon class="h-8 w-8 text-primary" />
-        <img 
-            src="/loanbram-black.png" 
-            alt="Loan Bram" 
-            class="h-8 object-contain dark:hidden" 
-        />
-        <img 
-            src="/loanbram-white.png" 
-            alt="Loan Bram" 
-            class="hidden h-8 object-contain dark:block" 
-        />
+        <div class="flex-shrink-0">
+            <img 
+                src="/loanbram-black.png" 
+                alt="Loan Bram" 
+                class="h-12 w-auto object-contain dark:hidden transition-all duration-300 hover:opacity-90" 
+            />
+            <img 
+                src="/loanbram-white.png" 
+                alt="Loan Bram" 
+                class="h-12 w-auto object-contain hidden dark:block transition-all duration-300 hover:opacity-90" 
+            />
+        </div>
     </div>
 
 </template>

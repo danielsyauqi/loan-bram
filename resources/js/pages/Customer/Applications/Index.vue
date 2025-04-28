@@ -20,6 +20,7 @@ import ToastNotification from '@/components/Modals/ToastNotification.vue';
 
 const page = usePage<SharedData>();
 const user = computed(() => page.props.auth?.user);
+const userStatus = computed(() => (user.value as any)?.status || 'not active');
 
 // Props
 const props = defineProps<{
@@ -291,7 +292,7 @@ const performDelete = () => {
   <Head title="My Applications" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="flex flex-col gap-6 p-6 bg-gray-50 dark:bg-gray-900 rounded-xl">
+    <div v-if="userStatus !== 'not active'" class="flex flex-col gap-6 p-6 bg-gray-50 dark:bg-gray-900 rounded-xl">
       <!-- Header -->
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -513,6 +514,11 @@ const performDelete = () => {
                 </div>
             </div>
       
+    </div>
+    <div v-else>    
+        <div class="text-center py-12">
+            <div class="text-gray-500 dark:text-gray-400">You are not authorized to access this page.</div>
+        </div>
     </div>
   </AppLayout>
   

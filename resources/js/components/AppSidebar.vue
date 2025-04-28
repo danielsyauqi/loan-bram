@@ -170,8 +170,8 @@ const footerNavItems: NavItem[] = [
         <SidebarHeader>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
-                        <Link :href="user?.role === 'customer' ? '/customer-dashboard' : '/dashboard'">
+                    <SidebarMenuButton size="xl" as-child>
+                        <Link :href="user?.role === 'customer' ? '/customer-dashboard' : '/dashboard'" class="scale-110">
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>

@@ -7,7 +7,6 @@
       <div class="container mx-auto px-6 py-5 flex justify-between items-center">
         <div class="flex items-center">
           <a href="/" class="flex items-center">
-            <img src="/newlogo.png" alt="Loan Bram Logo" class="h-10 w-10 object-contain" />
             <img src="/loanbram-black.png" alt="Loan Bram" class="h-10 ml-2 object-contain" />
           </a>
         </div>
@@ -139,7 +138,7 @@
         <div class="flex flex-col md:flex-row justify-between items-center">
           <div class="mb-6 md:mb-0 animate-on-scroll">
             <div class="flex items-center justify-center md:justify-start">
-              <img src="/loanbram-black.png" alt="Loan Bram" class="h-9 ml-2 object-contain" />
+              <img src="/loanbram-black.png" alt="Loan Bram" class="h-9 object-contain" />
             </div>
             <p class="text-gray-500 text-sm mt-2">© 2025 All rights reserved.</p>
           </div>

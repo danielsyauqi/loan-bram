@@ -42,6 +42,7 @@ const user = computed(() => page.props.auth?.user);
 
 // Get user role from the auth user object
 const userRole = computed(() => (user.value as any)?.role || 'user');
+const userStatus = computed(() => (user.value as any)?.status || 'not active');
 
 
 // Register components
@@ -527,7 +528,7 @@ const redirectToIndex = () => {
     <Head :title="`New ${module.title} Application`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div v-if="userRole === 'admin'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userRole === 'admin' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
             <form @submit.prevent="submitForm" class="space-y-6">                        
 
             <!-- Header -->

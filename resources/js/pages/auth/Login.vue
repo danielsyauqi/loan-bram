@@ -69,7 +69,6 @@ onMounted(() => {
             <div class="split-form">
                 <div class="form-container">
                     <div class="auth-header">
-                        <img src="/newlogo.png" alt="Loan Bram" class="form-logo" />
                         <h2 class="auth-title">Welcome Back</h2>
                         <p class="auth-description">Sign in to your account to continue</p>
                     </div>
@@ -81,18 +80,18 @@ onMounted(() => {
                     <form @submit.prevent="submit" class="auth-form">
                         <div class="form-fields">
                             <div class="form-group">
-                                <Label for="email" class="form-label">Email address</Label>
+                                <Label for="emailusername" class="form-label">Login</Label>
                                 <div class="input-with-icon">
                                     <Mail class="input-icon" />
                                     <Input
-                                        id="email"
-                                        type="email"
+                                        id="emailusername"
+                                        type="text"
                                         required
                                         autofocus
                                         :tabindex="1"
                                         autocomplete="email"
                                         v-model="form.email"
-                                        placeholder="email@example.com"
+                                        placeholder="Email address / Username"
                                         class="auth-input"
                                     />
                                 </div>

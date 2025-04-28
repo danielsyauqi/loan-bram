@@ -17,7 +17,7 @@ const user = computed(() => page.props.auth?.user);
 
 // Get user role from the auth user object
 const userRole = computed(() => (user.value as any)?.role || 'user');
-
+const userStatus = computed(() => (user.value as any)?.status || 'not active');
 
 const props = defineProps<{
     moduleId: number;
@@ -296,7 +296,7 @@ const performDelete = () => {
     <Head :title="`${module.title} Applications`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div v-if="userRole !== 'customer' && props.modulePermissionValue === true" class="flex h-full flex-1 flex-col gap-4 sm:gap-6 rounded-xl p-3 sm:p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userRole !== 'customer' && props.modulePermissionValue === true && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-4 sm:gap-6 rounded-xl p-3 sm:p-6 bg-gray-50 dark:bg-gray-900">
             <!-- Module Header -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                 <div class="relative h-32 sm:h-48">

@@ -47,17 +47,14 @@ class RegisteredUserController extends Controller
             'ic_num' => $request->ic_number,
             'phone_num' => $request->phone, 
             'role' => 'customer',
-            'status' => 'not verified',
+            'status' => 'not active',
         ]);
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        if ($user->hasRole('customer')) {
-            return redirect()->route('customer.dashboard');
-        } else {
-            return redirect()->route('dashboard');
-        }
+        // Redirect to email verification notice after registration
+        return redirect()->route('verification.notice');
     }
 }

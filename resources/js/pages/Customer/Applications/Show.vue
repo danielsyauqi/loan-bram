@@ -25,6 +25,7 @@ const user = computed(() => page.props.auth?.user);
 
 // Get user role from the auth user object
 const userRole = computed(() => (user.value as any)?.role || 'user');
+const userStatus = computed(() => (user.value as any)?.status || 'not active');
 
 // Register components
 const components = {
@@ -253,7 +254,7 @@ onMounted(() => {
     <Head :title="'Application Details'" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div v-if="userRole === 'customer' || userRole === 'agent'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userRole === 'customer' || userRole === 'agent' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
             <!-- Header with Application Status Bar -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-all duration-300">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">

@@ -307,9 +307,6 @@ const showConfirmPassword = ref(false);
             <div class="split-form">
                 <div class="form-container">
                     <div class="auth-header">
-                        <a href="/">
-                            <img src="/newlogo.png" alt="Loan Bram" class="form-logo" />
-                        </a>
                         <h2 class="auth-title">Create an Account</h2>
                         <p class="auth-description">Join Loan Bram for streamlined loan management</p>
                     </div>

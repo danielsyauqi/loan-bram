@@ -10,7 +10,7 @@ const userAny = computed(() => page.props.auth?.user);
 
 // Get user role from the auth user object
 const userRole = computed(() => (userAny.value as any)?.role || 'user');
-
+const userStatus = computed(() => (userAny.value as any)?.status || 'not active');
 const props = defineProps<{
     user: {
         id: number;
@@ -105,7 +105,7 @@ const isModulePermitted = (moduleId: number) => {
     <Head title="User Details" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div v-if="userRole === 'admin'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userRole === 'admin' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
             <!-- Header Section -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>

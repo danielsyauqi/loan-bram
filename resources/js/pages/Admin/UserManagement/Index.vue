@@ -28,7 +28,7 @@ const user = computed(() => page.props.auth.user);
 
 // Get user role from the auth user object
 const userRole = computed(() => (user.value as any)?.role || 'user');
-
+const userStatus = computed(() => (user.value as any)?.status || 'not active');
 
 const props = defineProps<{
     users: {
@@ -234,7 +234,7 @@ const cancelDelete = () => {
     <Head title="User Management" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div v-if="userRole === 'admin'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userRole === 'admin' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
             <!-- Header Section -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>

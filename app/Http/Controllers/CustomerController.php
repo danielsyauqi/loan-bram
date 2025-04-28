@@ -252,7 +252,7 @@ class CustomerController extends Controller
         (isset($address->zip) ? ', ' . $address->zip : '') . 
         (isset($address->country) ? ', ' . $address->country : '');
         $employment = Employments::where('user_id', $user->id)->first() ?? [];
-        $employmentAddress = Addresses::where('employment_id', $employment->id)->first() ?? [];
+        $employmentAddress = Addresses::where('employment_id', $employment->id ?? 0)->first() ?? [];
         $employment_address = ($employmentAddress->address_line_1 ?? '') . 
         (isset($employmentAddress->address_line_2) ? ', ' . $employmentAddress->address_line_2 : '') . 
         (isset($employmentAddress->city) ? ', ' . $employmentAddress->city : '') . 

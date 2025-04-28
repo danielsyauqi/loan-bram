@@ -17,6 +17,7 @@ const userAny = computed(() => page.props.auth.user);
 
 // Get user role from the auth user object
 const userRole = computed(() => (userAny.value as any)?.role || 'user');
+const userStatus = computed(() => (userAny.value as any)?.status || 'not active');
 
 const props = defineProps<{
     user: any;
@@ -368,7 +369,7 @@ onMounted(() => {
     <Head title="Update Identity Form" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
             <!-- Header Section -->
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Update Identity Form <span class="ml-2 text-gray-600 dark:text-gray-300"> <StatusBadge :status="user.status" /></span></h1> 
@@ -1151,6 +1152,11 @@ onMounted(() => {
                 </form>
             </div>
         </div>
+        <div v-else>    
+            <div class="text-center py-12">
+                <div class="text-gray-500 dark:text-gray-400">You are not authorized to access this page.</div>
+            </div>
+        </div>
         
         <!-- Validation Error Modal -->
         <div v-if="showValidationModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
@@ -1236,5 +1242,6 @@ onMounted(() => {
                 </div>
             </div>
         </div>
+
     </AppLayout>
 </template> 

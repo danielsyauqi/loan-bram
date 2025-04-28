@@ -13,7 +13,7 @@ const userAny = computed(() => page.props.auth.user);
 
 // Get user role from the auth user object
 const userRole = computed(() => (userAny.value as any)?.role || 'user');
-
+const userStatus = computed(() => (userAny.value as any)?.status || 'not active');
 const props = defineProps<{
     module: {
         id: number;
@@ -79,7 +79,7 @@ const submit = () => {
     <Head title="Edit Module" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div v-if="userRole === 'admin'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userRole === 'admin' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
             <!-- Header Section -->
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Edit Module</h1>

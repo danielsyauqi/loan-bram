@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 class VerifyEmailController extends Controller
 {
@@ -15,15 +16,30 @@ class VerifyEmailController extends Controller
     public function __invoke(EmailVerificationRequest $request): RedirectResponse
     {
         if ($request->user()->hasVerifiedEmail()) {
-            return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
-        }
+            if($request->user()->role === 'customer') {
+                return redirect()->intended(route('customer.dashboard', absolute: false).'?verified=1');
+            }else{
+                return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+            }
+        }   
 
         if ($request->user()->markEmailAsVerified()) {
             /** @var \Illuminate\Contracts\Auth\MustVerifyEmail $user */
             $user = $request->user();
+            User::where('id', $user->id)->update(['status' => 'not verified']);
             event(new Verified($user));
+            if($user->role === 'customer') {
+                return redirect()->intended(route('customer.dashboard', absolute: false).'?verified=1');
+            }else{
+                return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+            }
         }
-
-        return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+        
+        $user = $request->user();
+        if($user->role === 'customer') {
+            return redirect()->intended(route('customer.dashboard', absolute: false).'?verified=1');
+        }else{
+            return redirect()->intended(route('dashboard', absolute: false).'?verified=1');
+        }
     }
 }

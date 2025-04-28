@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type SharedData } from '@/types';
 import ToastNotification from '@/components/Modals/ToastNotification.vue';
 import { useNotificationStore } from '../../stores/notificationStore';
 declare function route(name: string, params?: any): string;
@@ -12,7 +12,9 @@ const showToast = ref(false);
 const toastMessage = ref('');
 const toastType = ref<'success' | 'error' | 'warning'>('success');
 
-const page = usePage();
+const page = usePage<SharedData>();
+const userStatus = computed(() => (page.props.auth?.user as any)?.status || 'not active');
+
 
 // Initialize notification store
 const notificationStore = useNotificationStore();
@@ -141,7 +143,7 @@ console.log(notifications);
     <Head title="Notifications" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
             <!-- Header Section -->
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Notification</h1>
@@ -346,9 +348,16 @@ console.log(notifications);
                     </div>
                 </div>
             </div>
+           
         </div>
+        <div v-else>    
+                <div class="text-center py-12">
+                <div class="text-gray-500 dark:text-gray-400">You are not authorized to access this page.</div>
+            </div>
+        </div>
+    
     </AppLayout>
-
+    
     <!-- Toast notification -->
     <ToastNotification
         :show="showToast"

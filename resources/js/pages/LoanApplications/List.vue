@@ -15,7 +15,7 @@ declare function route(name: string, params?: any): string;
 const page = usePage<SharedData>();
 const user = computed(() => page.props.auth?.user);
 const userRole = computed(() => (user.value as any)?.role || 'user');
-
+const userStatus = computed(() => (user.value as any)?.status || 'not active');
 const loading = ref(true);
 const applicationToDelete = ref<number | null>(null);
 const showDeleteModal = ref(false);
@@ -353,7 +353,7 @@ const goToReferenceId = (referenceId: string) => {
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Loan Applications" />
 
-    <div class="p-6">
+    <div v-if="userStatus !== 'not active'" class="p-6">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Loan Applications</h1>
         
@@ -594,6 +594,11 @@ const goToReferenceId = (referenceId: string) => {
           </div>
         </div>
       </div>
+    </div>
+    <div v-else>    
+        <div class="text-center py-12">
+            <div class="text-gray-500 dark:text-gray-400">You are not authorized to access this page.</div>
+        </div>
     </div>
 
     <!-- Success Modal -->

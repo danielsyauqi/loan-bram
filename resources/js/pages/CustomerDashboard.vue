@@ -10,6 +10,8 @@ declare function route(name: string, params?: any): string;
 const page = usePage<SharedData>();
 const user = computed(() => page.props.auth.user);
 
+// Get user role from the auth user object
+const userStatus = computed(() => (user.value as any)?.status || 'not active');
 
 // Define props
 const props = defineProps<{
@@ -116,7 +118,7 @@ onMounted(() => {
     <Head title="Dashboard" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 sm:gap-6 rounded-xl p-3 sm:p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-4 sm:gap-6 rounded-xl p-3 sm:p-6 bg-gray-50 dark:bg-gray-900">
             <!-- User Profile and Welcome Message -->
             <div class="p-3 sm:p-6 bg-white rounded-xl shadow-lg dark:bg-gray-800 transition-all duration-300">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
@@ -334,6 +336,11 @@ onMounted(() => {
                         </svg>
                     </Link>
                 </div>
+        </div>
+        <div v-else>    
+            <div class="text-center py-12">
+                <div class="text-gray-500 dark:text-gray-400">You are not authorized to access this page.</div>
+            </div>
         </div>
     </AppLayout>
 </template>

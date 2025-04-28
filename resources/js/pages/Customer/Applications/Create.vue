@@ -28,6 +28,7 @@ interface PageProps {
 // Type the page object
 const page = usePage<PageProps>();
 const user = computed(() => page.props.auth?.user);
+const userStatus = computed(() => (user.value as any)?.status || 'not active');
 
 // Props
 const props = withDefaults(defineProps<{
@@ -216,7 +217,7 @@ watch(() => form.information_correct && form.terms_agreed, (newValue) => {
   <Head :title="`New Loan Application`" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
+    <div v-if="userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
       <!-- Header -->
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -631,6 +632,11 @@ watch(() => form.information_correct && form.terms_agreed, (newValue) => {
           </div>
       </div>
     </div>
+    </div>
+    <div v-else>    
+        <div class="text-center py-12">
+            <div class="text-gray-500 dark:text-gray-400">You are not authorized to access this page.</div>
+        </div>
     </div>
   </AppLayout>
   
