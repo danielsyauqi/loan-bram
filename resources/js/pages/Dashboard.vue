@@ -38,85 +38,67 @@ const breadcrumbs: BreadcrumbItem[] = [
 const props = defineProps({
   monthlyDisbursed: {
     type: Array as () => number[],
-    default: () => [0, 25000, 32000, 38000, 42000, 48000, 53000, 58000, 63000, 72000, 85000, 92000, 98000]
+    default: () => []
   },
   topModules: {
     type: Array,
-    default: () => [
-      { name: 'Personal Loan', applications: 245, growth: 12, image: 'images/module-personal.jpg' },
-      { name: 'Business Loan', applications: 187, growth: 8, image: 'images/module-business.jpg' },
-      { name: 'Home Financing', applications: 164, growth: -3, image: 'images/module-home.jpg' },
-      { name: 'Auto Financing', applications: 132, growth: 5, image: 'images/module-auto.jpg' },
-      { name: 'Education Loan', applications: 98, growth: 2, image: 'images/module-education.jpg' }
-    ]
+    default: () => []
   },
   recentApplications: {
     type: Array,
-    default: () => [
-      { id: 1, customer: 'Jane Smith', module: 'Personal Loan', product: 'Quick Cash', amount: '15000', status: 'approved', date: new Date().toISOString() },
-      { id: 2, customer: 'John Doe', module: 'Business Loan', product: 'SME Growth', amount: '50000', status: 'pending', date: new Date().toISOString() },
-      { id: 3, customer: 'Ahmad Abdullah', module: 'Home Financing', product: 'Home Purchase', amount: '350000', status: 'processing', date: new Date().toISOString() },
-      { id: 4, customer: 'Lisa Wong', module: 'Auto Financing', product: 'New Vehicle', amount: '80000', status: 'rejected', date: new Date().toISOString() },
-      { id: 5, customer: 'Michael Chen', module: 'Education Loan', product: 'Graduate Studies', amount: '40000', status: 'disbursed', date: new Date().toISOString() }
-    ]
+    default: () => []
   },
   recentNotification: {
     type: Array,
-    default: () => [
-      { id: 1, title: 'New Loan Application', description: 'A new loan application has been submitted by John Doe', role: 'admin', created_at: new Date().toISOString() },
-      { id: 2, title: 'Loan Approved', description: 'The loan application for Jane Smith has been approved', role: 'agent', created_at: new Date().toISOString() },
-      { id: 3, title: 'Pending Verification', description: 'Customer documents require verification for Ahmad Abdullah', role: 'sub agent', created_at: new Date().toISOString() },
-      { id: 4, title: 'System Update', description: 'System maintenance scheduled for tonight at 2AM', role: 'all', created_at: new Date().toISOString() },
-      { id: 5, title: 'Disbursement Completed', description: 'Funds have been successfully disbursed for Lisa Wong', role: 'customer', created_at: new Date().toISOString() }
-    ]
+    default: () => []
   },
   totalLoanApplications: {
     type: Number,
-    default: 826
+    default: 0
   },
   weekLoanApplications: {
     type: Number,
-    default: 24
+    default: 0
   },
   weekLoanActive: {
     type: Number,
-    default: 15
+    default: 0
   },
   weekLoanDisbursed: {
     type: Number,
-    default: 120000
+    default: 0
   },
   totalLoanActive: {
     type: Number,
-    default: 475
+    default: 0
   },
   totalLoanPending: {
     type: Number,
-    default: 125
+    default: 0
   },
   totalLoanRejected: {
     type: Number,
-    default: 76
+    default: 0
   },
   totalLoanApproved: {
     type: Number,
-    default: 625
+    default: 0
   },
   totalLoanDisbursed: {
     type: String,
-    default: '2450000'
+    default: '0'
   },
   totalCustomers: {
     type: Number,
-    default: 580
+    default: 0
   },
   weekTotalCustomers: {
     type: Number,
-    default: 18
+    default: 0
   },
   compareDisbursedLastYearPercentage: {
     type: Number,
-    default: 12.5
+    default: 0
   }
 });
 
@@ -135,53 +117,18 @@ function formatNumberTwoDecimal(value: string | number): string {
   });
 }
 
-// Dashboard stats
-const stats = ref([
-  { 
-    title: 'Total Applications', 
-    value: props.totalLoanApplications, 
-    change: props.weekLoanApplications, 
-    trend: props.weekLoanApplications > 0 ? 'up' : 'down', 
-    icon: FileText,
-    color: 'blue'
-  },
-  { 
-    title: 'Active Loans', 
-    value: props.totalLoanActive, 
-    change: props.weekLoanActive, 
-    trend: props.weekLoanActive > 0 ? 'up' : 'down', 
-    icon: CreditCard,
-    color: 'green'
-  },
-  { 
-    title: 'Total Customers', 
-    value: props.totalCustomers, 
-    change: props.weekTotalCustomers ?? 0, 
-    trend: props.weekTotalCustomers > 0 ? 'up' : 'down', 
-    icon: Users,
-    color: 'indigo'
-  },
-  { 
-    title: 'Total Disbursed', 
-    value: totalLoanDisbursedNew, 
-    change: weekLoanDisbursedNew, 
-    trend: props.weekLoanDisbursed > 0 ? 'up' : 'down', 
-    icon: DollarSign,
-    color: 'amber'
-  },
-]);
-
-const disbursedData = props.monthlyDisbursed;
+// Defensive: If monthlyDisbursed is empty, fill with 12 zeros for chart
+const disbursedData = props.monthlyDisbursed.length === 12 ? props.monthlyDisbursed : Array(12).fill(0);
 
 // Chart data
 const monthlyDisbursed = ref({
   months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-  values: [disbursedData[1], disbursedData[2], disbursedData[3], disbursedData[4], disbursedData[5], disbursedData[6], 
-  disbursedData[7], disbursedData[8], disbursedData[9], disbursedData[10], disbursedData[11], disbursedData[12]]
+  values: disbursedData
 });
 
-const maxDisbursed = Math.max(...monthlyDisbursed.value.values);
-console.log(maxDisbursed);
+// Defensive: If all values are zero, set maxDisbursed to 1 to avoid NaN
+const maxDisbursed = Math.max(1, ...monthlyDisbursed.value.values);
+
 // Chart data for application status
 const applicationsData = ref({
   labels: ['Approved', 'Processing', 'Rejected'],
@@ -189,11 +136,10 @@ const applicationsData = ref({
   colors: ['#10B981', '#FBBF24', '#EF4444']
 });
 
-// Calculate donut chart stroke values
+// Defensive: If all values are zero, set total to 1 to avoid division by zero
 const calculateDonutValues = computed(() => {
-  const total = applicationsData.value.values.reduce((acc, val) => acc + val, 0);
-  const circumference = 2 * Math.PI * 40; // 2πr where radius is 40
-  
+  const total = applicationsData.value.values.reduce((acc, val) => acc + val, 0) || 1;
+  const circumference = 2 * Math.PI * 40;
   let currentOffset = 0;
   const segments = applicationsData.value.values.map((value, index) => {
     const dashLength = (value / total) * circumference;
@@ -205,9 +151,27 @@ const calculateDonutValues = computed(() => {
     currentOffset += dashLength;
     return segment;
   });
-  
   return segments;
 });
+
+// Defensive getChartPoints
+const getChartPoints = () => {
+  const width = chartWidth.value - 20;
+  const height = chartHeight.value - 20;
+  if (!width || !height) return '';
+  const data = monthlyDisbursed.value.values;
+  if (!data.length || data.every(v => v === 0)) return '';
+  const max = maxDisbursed * 1.1;
+  const min = 0;
+  const range = max - min;
+  if (range === 0) return '';
+  const points = data.map((value, index) => {
+    const x = 10 + ((width - 10) / 11) * index;
+    const y = height - ((value - min) / range) * height;
+    return `${x},${y}`;
+  }).join(' ');
+  return points;
+};
 
 const showToast = ref(false);
 const toastMessage = ref('');
@@ -283,26 +247,6 @@ onMounted(() => {
   });
 });
 
-// Get chart points for disbursed chart
-const getChartPoints = () => {
-  const width = chartWidth.value - 20; // Leave space on the right edge
-  const height = chartHeight.value - 20; // Leave space for x-axis labels
-  if (!width || !height) return '';
-  
-  const data = monthlyDisbursed.value.values;
-  const max = maxDisbursed * 1.1; // Add 10% padding to the max value
-  const min = 0; // Start from zero for better visual representation
-  const range = max - min;
-  
-  const points = data.map((value, index) => {
-    const x = 10 + ((width - 10) / 11) * index; // Start 10px from left edge
-    const y = height - ((value - min) / range) * height;
-    return `${x},${y}`;
-  }).join(' ');
-  
-  return points;
-};
-
 // Function to format number with commas
 const formatNumber = (num: number) => {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -376,6 +320,42 @@ onMounted(() => {
     toastType.value = 'success';
   }
 });
+
+// Dashboard stats
+const stats = ref([
+  { 
+    title: 'Total Applications', 
+    value: props.totalLoanApplications, 
+    change: props.weekLoanApplications, 
+    trend: props.weekLoanApplications > 0 ? 'up' : 'down', 
+    icon: FileText,
+    color: 'blue'
+  },
+  { 
+    title: 'Active Loans', 
+    value: props.totalLoanActive, 
+    change: props.weekLoanActive, 
+    trend: props.weekLoanActive > 0 ? 'up' : 'down', 
+    icon: CreditCard,
+    color: 'green'
+  },
+  { 
+    title: 'Total Customers', 
+    value: props.totalCustomers, 
+    change: props.weekTotalCustomers ?? 0, 
+    trend: props.weekTotalCustomers > 0 ? 'up' : 'down', 
+    icon: Users,
+    color: 'indigo'
+  },
+  { 
+    title: 'Total Disbursed', 
+    value: totalLoanDisbursedNew, 
+    change: weekLoanDisbursedNew, 
+    trend: props.weekLoanDisbursed > 0 ? 'up' : 'down', 
+    icon: DollarSign,
+    color: 'amber'
+  },
+]);
 
 </script>
 
@@ -453,70 +433,60 @@ onMounted(() => {
           </div>
           
           <div class="relative h-[300px] w-full">
-            <!-- SVG Chart -->
-            <svg class="h-full w-full" :viewBox="`0 0 ${chartWidth} ${chartHeight + 30}`">
-              <!-- Grid Lines -->
-              <line v-for="i in 5" :key="i" x1="0" :x2="chartWidth" :y1="i * (chartHeight - 20) / 5" :y2="i * (chartHeight - 20) / 5" 
-                    stroke="#e5e7eb" stroke-width="1" stroke-dasharray="5,5" />
-              
-              <!-- Y-axis labels -->
-              <text v-for="i in 5" :key="i + 'label'" x="5" :y="i * (chartHeight - 20) / 5 - 5" 
-                    font-size="10" fill="#9ca3af" class="dark:fill-gray-400">
-                    RM {{ formatNumber(Math.round(maxDisbursed * 1.1 * (5 - i) / 5)) }}
-                  </text>
-              
-              <!-- X-axis labels -->
-              <text v-for="(month, i) in monthlyDisbursed.months" :key="month" 
-                    :x="10 + i * (chartWidth - 20) / 11" 
-                    :y="chartHeight - 5" 
-                    font-size="11" 
-                    font-weight="500"
-                    fill="#6b7280" 
-                    text-anchor="middle"
-                    class="dark:fill-gray-300">
-                {{ month }}
-              </text>
-              
-              <!-- X-axis line -->
-              <line x1="10" :x2="chartWidth - 10" :y1="chartHeight - 20" :y2="chartHeight - 20" 
-                    stroke="#e5e7eb" stroke-width="1" />
-              
-              <!-- Area under the line -->
-              <path :d="`M10,${chartHeight - 20} ${getChartPoints()} ${chartWidth - 10},${chartHeight - 20} Z`"
-                    fill="rgba(59, 130, 246, 0.1)" />
-            
-              <!-- Line Chart -->
-              <polyline :points="getChartPoints()" 
-                        fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-              
-              <!-- Data Points -->
-              <circle v-for="(value, i) in monthlyDisbursed.values" :key="i + 'point'"
-                      :cx="8 + i * (chartWidth - 20) / 11" 
-                      :cy="(chartHeight - 20) - (value / (Math.max(...monthlyDisbursed.values) * 1.1)) * (chartHeight - 20)"
-                      r="4" fill="#3b82f6" />
-              
-              <!-- Hover tooltips -->
-              <g v-for="(value, i) in monthlyDisbursed.values" :key="i + 'tooltip'">
-                <circle 
-                  :cx="10 + i * (chartWidth - 20) / 11" 
-                  :cy="(chartHeight - 20) - (value / (Math.max(...monthlyDisbursed.values) * 1.1)) * (chartHeight - 20)"
-                  r="8" 
-                  fill="transparent" 
-                  stroke="transparent"
-                  class="cursor-pointer hover:fill-blue-200 hover:fill-opacity-50 transition-all duration-150"
-                  @mouseenter="showTooltip($event, formatNumber(value), monthlyDisbursed.months[i])"
-                  @mouseleave="hideTooltip()"
-                />
-              </g>
-            </svg>
-            
-            <!-- Tooltip -->
-            <div v-if="tooltip.show" 
-                 class="fixed pointer-events-none bg-gray-900 text-white p-2 rounded-md text-xs transition-opacity duration-200 z-10 shadow-lg"
-                 :style="{left: `${tooltip.x}px`, top: `${tooltip.y}px`, opacity: tooltip.show ? 1 : 0, transform: 'translate(-50%, -100%)'}">
-              <div class="font-semibold">{{ tooltip.month }}</div>
-              <div>{{ tooltip.value }}</div>
-            </div>
+            <!-- SVG Chart or Placeholder -->
+            <template v-if="monthlyDisbursed.values.length && !monthlyDisbursed.values.every(v => v === 0)">
+              <!-- SVG Chart -->
+              <svg class="h-full w-full" :viewBox="`0 0 ${chartWidth} ${chartHeight + 30}`">
+                <!-- Grid Lines -->
+                <line v-for="i in 5" :key="i" x1="0" :x2="chartWidth" :y1="i * (chartHeight - 20) / 5" :y2="i * (chartHeight - 20) / 5" 
+                      stroke="#e5e7eb" stroke-width="1" stroke-dasharray="5,5" />
+                <!-- Y-axis labels -->
+                <text v-for="i in 5" :key="i + 'label'" x="5" :y="i * (chartHeight - 20) / 5 - 5" 
+                      font-size="10" fill="#9ca3af" class="dark:fill-gray-400">
+                      RM {{ formatNumber(Math.round(maxDisbursed * 1.1 * (5 - i) / 5)) }}
+                    </text>
+                <!-- X-axis labels -->
+                <text v-for="(month, i) in monthlyDisbursed.months" :key="month" 
+                      :x="10 + i * (chartWidth - 20) / 11" 
+                      :y="chartHeight - 5" 
+                      font-size="11" 
+                      font-weight="500"
+                      fill="#6b7280" 
+                      text-anchor="middle"
+                      class="dark:fill-gray-300">
+                  {{ month }}
+                </text>
+                <!-- X-axis line -->
+                <line x1="10" :x2="chartWidth - 10" :y1="chartHeight - 20" :y2="chartHeight - 20" 
+                      stroke="#e5e7eb" stroke-width="1" />
+                <!-- Area under the line, line chart, data points, tooltips -->
+                <path :d="`M10,${chartHeight - 20} ${getChartPoints()} ${chartWidth - 10},${chartHeight - 20} Z`"
+                      fill="rgba(59, 130, 246, 0.1)" />
+                <polyline :points="getChartPoints()" 
+                          fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                <circle v-for="(value, i) in monthlyDisbursed.values" :key="i + 'point'"
+                        :cx="8 + i * (chartWidth - 20) / 11" 
+                        :cy="(chartHeight - 20) - (value / (Math.max(...monthlyDisbursed.values) * 1.1)) * (chartHeight - 20)"
+                        r="4" fill="#3b82f6" />
+                <g v-for="(value, i) in monthlyDisbursed.values" :key="i + 'tooltip'">
+                  <circle 
+                    :cx="10 + i * (chartWidth - 20) / 11" 
+                    :cy="(chartHeight - 20) - (value / (Math.max(...monthlyDisbursed.values) * 1.1)) * (chartHeight - 20)"
+                    r="8" 
+                    fill="transparent" 
+                    stroke="transparent"
+                    class="cursor-pointer hover:fill-blue-200 hover:fill-opacity-50 transition-all duration-150"
+                    @mouseenter="showTooltip($event, formatNumber(value), monthlyDisbursed.months[i])"
+                    @mouseleave="hideTooltip()"
+                  />
+                </g>
+              </svg>
+            </template>
+            <template v-else>
+              <div class="flex items-center justify-center h-full w-full text-gray-400 text-lg">
+                No disbursement data available.
+              </div>
+            </template>
           </div>
           
           <!-- Legend -->
@@ -574,7 +544,11 @@ onMounted(() => {
                   <div class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ label }}</div>
                     <span class="text-xs text-gray-500">{{ applicationsData.values[i] }}</span>
                   </div>
-                  <span class="text-xs text-gray-500">{{ Math.round((applicationsData.values[i] / applicationsData.values.reduce((a, b) => a + b, 0)) * 100) }}%</span>
+                  <span class="text-xs text-gray-500">{{ 
+                    applicationsData.values.reduce((a, b) => a + b, 0) === 0 
+                      ? 0 
+                      : Math.round((applicationsData.values[i] / applicationsData.values.reduce((a, b) => a + b, 0)) * 100) 
+                  }}%</span>
                 </div>
                 </div>
             </div>

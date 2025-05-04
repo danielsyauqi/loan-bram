@@ -75,6 +75,15 @@ onMounted(() => {
         <div>
           <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Application #{{ application.reference_id }}</h1>
           <p class="text-gray-600 dark:text-gray-300">Select a loan module to continue your application</p>
+          <div class="mt-2">
+          <Link :href="`/show-application/${application.reference_id}`" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-stickies-fill" viewBox="0 0 16 16">
+              <path d="M0 1.5V13a1 1 0 0 0 1 1V1.5a.5.5 0 0 1 .5-.5H14a1 1 0 0 0-1-1H1.5A1.5 1.5 0 0 0 0 1.5"/>
+              <path d="M3.5 2A1.5 1.5 0 0 0 2 3.5v11A1.5 1.5 0 0 0 3.5 16h6.086a1.5 1.5 0 0 0 1.06-.44l4.915-4.914A1.5 1.5 0 0 0 16 9.586V3.5A1.5 1.5 0 0 0 14.5 2zm6 8.5a1 1 0 0 1 1-1h4.396a.25.25 0 0 1 .177.427l-5.146 5.146a.25.25 0 0 1-.427-.177z"/>
+            </svg>
+            <span>Preview Application</span>
+          </Link>
+        </div>
         </div>
       </div>
 
@@ -130,8 +139,9 @@ onMounted(() => {
           <!-- Card Content -->
           <div class="p-6">
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ module.title }}</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">{{ module.description }}</p>
-            
+            <p class="text-gray-500 dark:text-gray-400 truncate max-w-xs mb-4" :title="module.description">
+                            {{ module.description.length > 50 ? module.description.slice(0, 50) + '...' : module.description }}
+                        </p>                         
             <div class="grid grid-cols-2 gap-2 mb-6">
               <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Interest Rate</p>

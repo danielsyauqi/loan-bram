@@ -42,12 +42,24 @@ const emailAvailable = ref<boolean | null>(null);
 const originalUsername = props.user.username || '';
 const originalEmail = props.user.email;
 
+// Pending email states
+const hasPendingEmail = ref(!!props.user.pending_email);
+const pendingEmail = ref(props.user.pending_email || '');
+const pendingEmailSentAt = ref(props.user.pending_email_sent_at || null);
+const newEmailInputVisible = ref(false);
+const isProcessingEmailChange = ref(false);
+const emailChangeError = ref('');
+const emailChangeSuccess = ref('');
+const emailResendSuccess = ref(false);
+const emailCancelSuccess = ref(false);
+const newEmailForm = useForm({
+    new_email: '',
+});
 
 // Profile form
 const profileForm = useForm({
     name: props.user.name,
     username: props.user.username || '',
-    email: props.user.email,
     user_photo: null,
     _method: 'POST',
 });
@@ -113,15 +125,8 @@ const checkUsernameAvailability = debounce(async (username: string) => {
 const emailRegexMessage = ref(false);
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Check email availability
+// Check email availability - only called for new_email field
 const checkEmailAvailability = debounce(async (email: string) => {
-    // Skip check if email is unchanged
-    if (email === originalEmail) {
-        emailAvailable.value = null;
-        emailRegexMessage.value = false;
-        return;
-    }
-    
     if (!email || !email.includes('@')) {
         emailAvailable.value = null;
         emailRegexMessage.value = true;
@@ -129,7 +134,6 @@ const checkEmailAvailability = debounce(async (email: string) => {
     }
     
     try {
-
         if (!emailRegex.test(email)) {
             emailRegexMessage.value = true;
         } else {
@@ -205,13 +209,121 @@ const validatePasswordConfirmation = () => {
     passwordsMatch.value = passwordForm.password === passwordForm.password_confirmation;
 };
 
+// Email change methods
+const startEmailChange = () => {
+    newEmailInputVisible.value = true;
+    newEmailForm.new_email = '';
+    emailAvailable.value = null;
+    emailRegexMessage.value = false;
+};
+
+const cancelEmailChange = () => {
+    newEmailInputVisible.value = false;
+    newEmailForm.new_email = '';
+    emailAvailable.value = null;
+    emailRegexMessage.value = false;
+};
+
+// Request email change
+const requestEmailChange = async () => {
+    // Don't submit if email is not available or invalid
+    if (emailAvailable.value === false || emailRegexMessage.value === true) {
+        return;
+    }
+    
+    try {
+        isProcessingEmailChange.value = true;
+        emailChangeError.value = '';
+        
+        const response = await axios.post('/email/change', { 
+            new_email: newEmailForm.new_email 
+        });
+        
+        // Success - update UI to show pending email
+        hasPendingEmail.value = true;
+        pendingEmail.value = newEmailForm.new_email;
+        pendingEmailSentAt.value = new Date().toISOString();
+        emailChangeSuccess.value = `Verification email sent to ${newEmailForm.new_email}`;
+        newEmailInputVisible.value = false;
+        
+        // Clear after a few seconds
+        setTimeout(() => {
+            emailChangeSuccess.value = '';
+        }, 5000);
+        
+    } catch (error: any) {
+        console.error('Failed to request email change:', error);
+        emailChangeError.value = error.response?.data?.message || 'Failed to request email change';
+    } finally {
+        isProcessingEmailChange.value = false;
+    }
+};
+
+// Resend verification email
+const resendVerificationEmail = async () => {
+    try {
+        isProcessingEmailChange.value = true;
+        emailChangeError.value = '';
+        
+        await axios.post('/email/change/resend');
+        
+        // Update sent time
+        pendingEmailSentAt.value = new Date().toISOString();
+        emailResendSuccess.value = true;
+        
+        // Clear after a few seconds
+        setTimeout(() => {
+            emailResendSuccess.value = false;
+        }, 5000);
+        
+    } catch (error: any) {
+        console.error('Failed to resend verification:', error);
+        emailChangeError.value = error.response?.data?.message || 'Failed to resend verification email';
+    } finally {
+        isProcessingEmailChange.value = false;
+    }
+};
+
+// Cancel pending email change
+const cancelPendingEmailChange = async () => {
+    try {
+        isProcessingEmailChange.value = true;
+        emailChangeError.value = '';
+        
+        await axios.post('/email/change/cancel');
+        
+        // Reset UI
+        hasPendingEmail.value = false;
+        pendingEmail.value = '';
+        pendingEmailSentAt.value = null;
+        emailCancelSuccess.value = true;
+        
+        // Clear after a few seconds
+        setTimeout(() => {
+            emailCancelSuccess.value = false;
+        }, 5000);
+        
+    } catch (error: any) {
+        console.error('Failed to cancel email change:', error);
+        emailChangeError.value = error.response?.data?.message || 'Failed to cancel email change';
+    } finally {
+        isProcessingEmailChange.value = false;
+    }
+};
+
+// Watch for changes to new_email field
+watch(() => newEmailForm.new_email, (newValue) => {
+    if (newValue) {
+        checkEmailAvailability(newValue);
+    } else {
+        emailAvailable.value = null;
+        emailRegexMessage.value = false;
+    }
+});
+
 // Watch for changes to username and email
 watch(() => profileForm.username, (newValue) => {
     checkUsernameAvailability(newValue);
-});
-
-watch(() => profileForm.email, (newValue) => {
-    checkEmailAvailability(newValue);
 });
 
 // Watch for changes in password fields
@@ -232,21 +344,17 @@ watch(() => passwordForm.password_confirmation, () => {
     validatePasswordConfirmation();
 });
 
-
-
 // Update profile
 const updateProfile = () => {
-    // Don't submit if username or email is not available
-    if (usernameAvailable.value === false || emailAvailable.value === false) {
+    // Don't submit if username is not available
+    if (usernameAvailable.value === false) {
         return;
     }
-    console.log(profileForm.user_photo);
-    
+
     profileForm.post(route('user.profile.update'), {
         preserveScroll: true,
         onSuccess: () => {
             usernameAvailable.value = null;
-            emailAvailable.value = null;
             profileSuccess.value = true;
             setTimeout(() => {
                 profileSuccess.value = false;
@@ -445,84 +553,171 @@ const passwordSuccess = ref(false);
                             </div>
                         </div>
 
-                        <!-- Email with real-time validation -->
+                        <!-- Email section -->
                         <div class="grid gap-2">
                             <Label for="email" class="text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Email address
-                                <span v-if="isCheckingEmail" class="ml-2 text-xs text-gray-500 dark:text-gray-400 animate-pulse">
-                                    Checking...
-                                </span>   
-                                <span v-else-if="emailRegexMessage === true" class="ml-2 text-xs text-red-600 dark:text-red-400">
-                                    ✗ Invalid email
-                                </span>
-                                <span v-else-if="emailAvailable === true" class="ml-2 text-xs text-green-600 dark:text-green-400">
-                                    ✓ Available
-                                </span>
-                                <span v-else-if="emailAvailable === false" class="ml-2 text-xs text-red-600 dark:text-red-400">
-                                    ✗ Already taken
-                                </span>
-                                
                             </Label>
-                            <div class="relative">
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    v-model="profileForm.email"
-                                    class="block w-full pr-10"
-                                    required
-                                    autocomplete="email"
-                                    placeholder="Your email address"
-                                />
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                    <svg v-if="isCheckingEmail" class="w-5 h-5 text-gray-400 animate-spin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    <svg v-else-if="emailAvailable === true" class="w-5 h-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                    </svg>
-                                    <svg v-else-if="emailAvailable === false" class="w-5 h-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                                    </svg>
+                            <div class="flex items-center gap-3">
+                                <span class="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-md text-gray-500 dark:text-gray-300 text-sm">
+                                    {{ user.email }}
+                                    <span v-if="user.email_verified_at" class="ml-2 text-xs text-green-600 dark:text-green-400">
+                                        (Verified)
+                                    </span>
+                                    <span v-else class="ml-2 text-xs text-amber-600 dark:text-amber-400">
+                                        (Unverified)
+                                    </span>
+                                </span>
+                                <Button 
+                                    v-if="!hasPendingEmail && !newEmailInputVisible"
+                                    type="button" 
+                                    class="shrink-0 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                    @click="startEmailChange"
+                                >
+                                    Change Email
+                                </Button>
+                            </div>
+
+                            <!-- Pending email change status -->
+                            <div v-if="hasPendingEmail" class="mt-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-700 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                    <div>
+                                        <p>Pending change to: <strong>{{ pendingEmail }}</strong></p>
+                                        <p class="text-xs mt-1">Verification email sent. Please check your inbox and click the confirmation link.</p>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <Button 
+                                            type="button"
+                                            class="text-xs px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                            @click="resendVerificationEmail"
+                                            :disabled="isProcessingEmailChange"
+                                        >
+                                            {{ isProcessingEmailChange ? 'Resending...' : 'Resend' }}
+                                        </Button>
+                                        <Button 
+                                            type="button"
+                                            class="text-xs px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                                            @click="cancelPendingEmailChange"
+                                            :disabled="isProcessingEmailChange"
+                                        >
+                                            {{ isProcessingEmailChange ? 'Cancelling...' : 'Cancel' }}
+                                        </Button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Resend success message -->
+                                <p v-if="emailResendSuccess" class="mt-2 text-xs text-green-600 dark:text-green-400">
+                                    Verification email resent successfully!
+                                </p>
+                                
+                                <!-- Cancel success message -->
+                                <p v-if="emailCancelSuccess" class="mt-2 text-xs text-green-600 dark:text-green-400">
+                                    Email change cancelled successfully!
+                                </p>
+                                
+                                <!-- Error message -->
+                                <p v-if="emailChangeError" class="mt-2 text-xs text-red-600 dark:text-red-400">
+                                    {{ emailChangeError }}
+                                </p>
+                            </div>
+
+                            <!-- New email input form -->
+                            <div v-if="newEmailInputVisible" class="mt-2">
+                                <div class="grid gap-2">
+                                    <Label for="new_email" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        New Email Address
+                                        <span v-if="isCheckingEmail" class="ml-2 text-xs text-gray-500 dark:text-gray-400 animate-pulse">
+                                            Checking...
+                                        </span>   
+                                        <span v-else-if="emailRegexMessage === true" class="ml-2 text-xs text-red-600 dark:text-red-400">
+                                            ✗ Invalid email
+                                        </span>
+                                        <span v-else-if="emailAvailable === true" class="ml-2 text-xs text-green-600 dark:text-green-400">
+                                            ✓ Available
+                                        </span>
+                                        <span v-else-if="emailAvailable === false" class="ml-2 text-xs text-red-600 dark:text-red-400">
+                                            ✗ Already taken
+                                        </span>
+                                    </Label>
+                                    <div class="relative">
+                                        <Input
+                                            id="new_email"
+                                            type="email"
+                                            v-model="newEmailForm.new_email"
+                                            class="block w-full pr-10"
+                                            required
+                                            placeholder="Enter your new email address"
+                                        />
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                            <svg v-if="isCheckingEmail" class="w-5 h-5 text-gray-400 animate-spin" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            <svg v-else-if="emailAvailable === true" class="w-5 h-5 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                            </svg>
+                                            <svg v-else-if="emailAvailable === false" class="w-5 h-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <p v-if="emailRegexMessage !== true || emailAvailable !== false" class="text-xs text-gray-600 dark:text-gray-400">
+                                        Email must be a valid format (example@domain.com) and must be unique.
+                                    </p>
+                                    <p v-if="emailRegexMessage === true" class="text-xs text-red-600 dark:text-red-400 mt-1">
+                                        Please enter a valid email address.
+                                    </p>
+                                    <p v-if="emailAvailable === false" class="text-xs text-red-600 dark:text-red-400 mt-1">
+                                        This email is already in use. Please use another email address.
+                                    </p>
+                                    
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <Button 
+                                            type="button" 
+                                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                            @click="requestEmailChange"
+                                            :disabled="emailAvailable !== true || isProcessingEmailChange || emailRegexMessage === true"
+                                        >
+                                            {{ isProcessingEmailChange ? 'Sending...' : 'Send Verification' }}
+                                        </Button>
+                                        <Button 
+                                            type="button" 
+                                            class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                                            @click="cancelEmailChange"
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </div>
+                                    
+                                    <!-- Success message -->
+                                    <p v-if="emailChangeSuccess" class="text-sm text-green-600 dark:text-green-400 mt-2">
+                                        {{ emailChangeSuccess }}
+                                    </p>
+                                    
+                                    <!-- Error message -->
+                                    <p v-if="emailChangeError" class="text-sm text-red-600 dark:text-red-400 mt-2">
+                                        {{ emailChangeError }}
+                                    </p>
                                 </div>
                             </div>
-                            <InputError :message="profileForm.errors.email" />
-                            <p v-if="emailRegexMessage !== true || emailAvailable !== false" class="text-xs text-gray-600 dark:text-gray-400">
-                                Email must be a valid format (example@domain.com) and must be unique.
-                            </p>
-                            <p v-if="emailRegexMessage === true" class="text-xs text-red-600 dark:text-red-400 mt-1">
-                                Please enter a valid email address.
-                            </p>
-                            <p v-if="emailAvailable === false" class="text-xs text-red-600 dark:text-red-400 mt-1">
-                                This email is already in use. Please use another email address.
-                            </p>
-                        </div>
 
-                        <!-- Email verification notice -->
-                        <div v-if="user.email_verified_at" class="px-4 py-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-700 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-400">
-                            <p class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                                </svg>
-                                Your email address is unverified.
-                                <Link
-                                    :href="route('verification.send')"
-                                    method="post"
-                                    as="button"
-                                    class="ml-2 underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                                >
-                                    Click here to resend the verification email.
-                                </Link>
-                            </p>
-                        </div>
-
-                        <div v-if="user.email_verified_at" class="px-4 py-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-700 dark:bg-green-900/30 dark:border-green-700 dark:text-green-400">
-                            <p class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                </svg>
-                                A new verification link has been sent to your email address.
-                            </p>
+                            <!-- Email verification notice for current email -->
+                            <div v-if="user.email_verified_at === null && !hasPendingEmail" class="px-4 py-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-700 dark:bg-amber-900/30 dark:border-amber-700 dark:text-amber-400">
+                                <p class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                                    </svg>
+                                    Your email address is unverified.
+                                    <Link
+                                        :href="route('verification.send')"
+                                        method="post"
+                                        as="button"
+                                        class="ml-2 underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                                    >
+                                        Click here to resend the verification email.
+                                    </Link>
+                                </p>
+                            </div>
                         </div>
 
                         <!-- Save button -->

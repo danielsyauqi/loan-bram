@@ -34,6 +34,9 @@ export interface User {
     created_at: string;
     updated_at: string;
     username: string;
+    pending_email?: string | null;
+    pending_email_token?: string | null;
+    pending_email_sent_at?: string | null;
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;

@@ -4,15 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Inertia\Inertia;
+use App\Models\Salaries;
 use App\Models\Addresses;
 use App\Models\LoanModules;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Models\LoanApplications;
+use App\Models\WorkflowRemarks;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use App\Models\Notification;
 
 class UserManagementController extends Controller
 {
@@ -23,7 +25,7 @@ class UserManagementController extends Controller
      */
     public function index(Request $request)
     {
-        $query = User::with('address')->orderBy('updated_at', 'desc');
+        $query = User::orderBy('updated_at', 'desc')->where('role', '!=', 'superuser');
         
         // Search functionality
         if ($request->has('search')) {
@@ -129,6 +131,11 @@ class UserManagementController extends Controller
             'user_photo' => $userPhotoPath,
             'module_permissions' => $request->module_permissions ? json_encode($request->module_permissions) : null,
         ]);
+
+        if($request->status !== 'not active'){
+            $user->email_verified_at = now();
+            $user->save();
+        }
 
         Log::info($user);
 
@@ -237,7 +244,11 @@ class UserManagementController extends Controller
             'ic_num' => $request->ic_num,
             'module_permissions' => $request->module_permissions ? json_encode($request->module_permissions) : null,
         ];
-        
+
+        if($request->status === 'not active'){
+            $userData['email_verified_at'] = null;
+        }
+
         // Handle photo upload
         if ($request->hasFile('user_photo')) {
             // Delete old photo if exists
@@ -288,19 +299,48 @@ class UserManagementController extends Controller
         if($user->role === 'agent') {
             LoanApplications::where('agent_id', $user->id)->update(['agent_id' => null]);
         }elseif($user->role === 'customer') {
+            // First get all loan applications for this customer
+            $loanApplications = LoanApplications::where('customer_id', $user->id)->get();
+            
+            // Delete workflow remarks for each loan application
+            foreach ($loanApplications as $application) {
+                WorkflowRemarks::where('loan_application_id', $application->id)->delete();
+            }
+            
+            // Then delete the loan applications
             LoanApplications::where('customer_id', $user->id)->delete();
+        }elseif($user->role === 'sub_agent') {
+            LoanApplications::where('sub_agent_id', $user->id)->update(['sub_agent_id' => null]);
         }
         
+        // Delete user photo if exists
+        if ($user->user_photo) {
+            $oldPhotoPath = storage_path('app/public/' . $user->user_photo);
+            if (file_exists($oldPhotoPath)) {
+                unlink($oldPhotoPath);
+            }
+        }
+
+        //Delete user salary
+        if (Salaries::where('customer_id', $user->id)->exists()) {
+            Salaries::where('customer_id', $user->id)->delete();
+            Log::info('Salary deleted');
+        }
+
         // Delete address first (if exists)
         if ($user->address) {
             $user->address->delete();
         }
 
+        //Delete user employment
+        if ($user->employment) {
+            Addresses::where('employment_id', $user->employment->id)->delete();
+            $user->employment->delete();
+        }
+
+
         //Delete notification
         Notification::where('receiver_id', $user->id)->orWhere('sender_id', $user->id)->delete();
-
-        //Delete loan application
-        LoanApplications::where('agent_id', $user->id)->orWhere('customer_id', $user->id)->delete();
         
         // Delete user
         $user->delete();

@@ -20,12 +20,12 @@ const showAvatar = computed(() => props.user.user_photo && props.user.user_photo
 </script>
 
 <template>
-        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-            <img v-if="user.user_photo" :src="`/storage/${user.user_photo}`" class="h-10 w-10 rounded-full object-cover" />
-            <template v-else>
-                {{ user.name.charAt(0).toUpperCase() }}
-            </template>
-        </div>
+        <Avatar class="h-8 w-8 overflow-hidden rounded-lg">
+            <AvatarImage v-if="showAvatar" :src="`/storage/${user.user_photo}`" :alt="user.name" />
+            <AvatarFallback class="rounded-lg text-black dark:text-white">
+                {{ getInitials(user.name) }}
+            </AvatarFallback>
+    </Avatar>
 
     <div class="grid flex-1 text-left text-sm leading-tight">
         <span class="truncate font-medium">{{ user.name }}</span>

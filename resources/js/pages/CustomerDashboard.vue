@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { ref, onMounted, computed } from 'vue';
+import SuccessModal from '@/components/Modals/SuccessModal.vue';
 declare function route(name: string, params?: any): string;
 
 // Get page props using usePage with proper typing
@@ -31,6 +32,9 @@ const breadcrumbs: BreadcrumbItem[] = [
 const currentTime = ref('');
 const greeting = ref('');
 
+const showSuccessModal = ref(false);
+const successMessage = ref('');
+
 const updateGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) greeting.value = 'Good Morning';
@@ -48,10 +52,9 @@ const formatCurrency = (value: string) => {
 const statusColors = computed(() => {
     return {
         new: { bg: 'bg-blue-100', text: 'text-blue-800', icon: 'bg-blue-200' },
-        processing: { bg: 'bg-yellow-100', text: 'text-yellow-800', icon: 'bg-yellow-200' },
         approved: { bg: 'bg-green-100', text: 'text-green-800', icon: 'bg-green-200' },
         rejected: { bg: 'bg-red-100', text: 'text-red-800', icon: 'bg-red-200' },
-        disbursed: { bg: 'bg-purple-100', text: 'text-purple-800', icon: 'bg-purple-200' },
+        processing: { bg: 'bg-purple-100', text: 'text-purple-800', icon: 'bg-purple-200' },
         total: { bg: 'bg-gray-100', text: 'text-gray-800', icon: 'bg-gray-200' }
     };
 });
@@ -110,7 +113,17 @@ onMounted(() => {
             hour12: true 
         });
     }, 1000);
+    // Show registration success modal if flash message is present
+    const flash = page.props.flash;
+    if (flash && typeof flash === 'object' && 'success' in flash && flash.success) {
+        successMessage.value = typeof flash.success === 'string' ? flash.success : 'Registration successful!';
+        showSuccessModal.value = true;
+    }
 });
+
+const closeSuccessModal = () => {
+    showSuccessModal.value = false;
+};
 
 </script>
 
@@ -144,7 +157,7 @@ onMounted(() => {
             </div>
 
             <!-- Metrics -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4 mb-3 sm:mb-6">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4 mb-3 sm:mb-6">
                     <!-- Total Applications -->
                     <div 
                         class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-3 sm:p-4 cursor-pointer transition-all duration-300"
@@ -240,24 +253,6 @@ onMounted(() => {
                         </div>
                     </div>
                     
-                    <!-- Disbursed Applications -->
-                    <div 
-                        class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-3 sm:p-4 cursor-pointer transition-all duration-300"
-                        :class="{ 'ring-2 ring-purple-500': selectedStatus === 'disbursed' }"
-                        @click="selectedStatus = 'disbursed'"
-                    >
-                        <div class="flex items-center">
-                            <div class="p-2 sm:p-3 rounded-full" :class="statusColors.disbursed.icon">
-                                <svg class="h-4 w-4 sm:h-6 sm:w-6" :class="statusColors.disbursed.text" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getStatusIcon('disbursed')" />
-                                </svg>
-                            </div>
-                            <div class="ml-2 sm:ml-4">
-                                <p class="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Disbursed</p>
-                                <p class="text-base sm:text-lg font-semibold text-gray-700 dark:text-white">{{ metrics.disbursed }}</p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-lg p-3 sm:p-6">
@@ -342,6 +337,12 @@ onMounted(() => {
                 <div class="text-gray-500 dark:text-gray-400">You are not authorized to access this page.</div>
             </div>
         </div>
+        <!-- Registration Success Modal -->
+        <SuccessModal
+            :show="showSuccessModal"
+            :message="successMessage"
+            @close="closeSuccessModal"
+        />
     </AppLayout>
 </template>
 

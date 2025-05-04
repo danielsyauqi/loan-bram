@@ -13,6 +13,9 @@ use App\Http\Controllers\ModulesManagementController;
 use App\Http\Controllers\LoanModulesList as LoanModulesController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ShortcutController;
+use App\Http\Controllers\Auth\EmailPreVerificationController;
+use App\Http\Controllers\Auth\RegisteredUserController;
+
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
@@ -117,7 +120,7 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
 
 // Customer Dashboard route
 Route::get('/customer-dashboard', [CustomerController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth'])
     ->name('customer.dashboard');
 Route::get('/show-application/{referenceNumber}', [CustomerController::class, 'show'])
     ->middleware(['auth', 'verified'])
@@ -213,5 +216,34 @@ Route::post('/assign-sub-agent/{referenceId}/{subagentId}', [App\Http\Controller
 Route::get('/dashboard', [DashboardController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
 Route::post('/admin/dashboard/notifications', [DashboardController::class, 'adminMarkAllNotifications'])->middleware(['auth', 'verified'])->name('admin.markAllNotifications');
 
+// Step 1: Send verification email
+Route::post('/register/email-preverify', [EmailPreVerificationController::class, 'sendVerification'])->name('email.preverify.send');
+
+// Step 1b: After clicking email link, verify and set session
+Route::get('/register/email-verify/{code}', [EmailPreVerificationController::class, 'verify'])->name('email.preverify');
+
+// Step 1c: Get verified email from session (for Vue onMounted)
+Route::get('/register/verified-email', function () {
+    return response()->json(['verified_email' => session('verified_email')]);
+})->name('register.verified-email');
+
+// Cancel email verification and clear session
+Route::post('/register/email-preverify/cancel', [EmailPreVerificationController::class, 'cancel'])->name('email.preverify.cancel');
+// Get current verified email from session
+Route::get('/register/email-preverify/current', [EmailPreVerificationController::class, 'currentVerifiedEmail'])->name('email.preverify.current');
+
+// Get email by preverify_code cookie
+Route::get('/register/email-by-code', [EmailPreVerificationController::class, 'getEmailByCode'])->name('email.by-code');
+
+// Route to show the registration page after email verification
+Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+
+Route::post('/register', [RegisteredUserController::class, 'store'])->name('register.finished');
+
+Route::get('/registration-success', [RegisteredUserController::class, 'registrationSuccess'])->name('registration.success');
+
+Route::post('/register/email-preverify/verify', [EmailPreVerificationController::class, 'verifyByCode'])->name('email.preverify.verify');
+
+Route::get('/invalid-verification-link', [EmailPreVerificationController::class, 'invalidVerificationLink'])->name('email.preverify.invalid');
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

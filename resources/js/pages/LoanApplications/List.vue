@@ -50,6 +50,8 @@ const props = defineProps<{
     reference_id: string;
     customer_name: string;
     status: string;
+    module_id: number;
+    moduleSlug: string;
   }>;
   isAdmin: boolean;
   permissions: {
@@ -339,13 +341,7 @@ onMounted(() => {
     }
 });
 
-const goToReferenceId = (referenceId: string) => {
-  if(props.moduleSlug){
-    router.visit(route('loan-modules.applications.show', { moduleSlug: props.moduleSlug, referenceId: referenceId }));
-  }else{
-    router.visit(route('choose-module', {   referenceId: referenceId }));
-  }
-};
+
 
 </script>
 
@@ -479,13 +475,19 @@ const goToReferenceId = (referenceId: string) => {
                     {{ formatDate(application.updated_at) }}
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Button v-if="props.isAdmin"
-                      @click="goToReferenceId(application.reference_id)"
+                    <Link v-if="props.isAdmin && !application.module_id"
+                      :href="'/choose-module/'+application.reference_id"
                       class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-4"
                     >
                       View
-                    </Button>
-                    <Link v-else
+                    </Link>
+                    <Link v-if="props.isAdmin && application.module_id"
+                      :href="'/loan-modules/'+application.moduleSlug+'/applications/'+application.reference_id"
+                      class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-4"
+                    >
+                      View
+                    </Link>
+                    <Link v-if="!props.isAdmin"
                       :href="route('customer.application.show', { referenceNumber: application.reference_id })"
                       class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 mr-4"
                     >

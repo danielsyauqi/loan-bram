@@ -254,7 +254,7 @@ onMounted(() => {
     <Head :title="'Application Details'" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div v-if="userRole === 'customer' || userRole === 'agent' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userStatus === 'active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
             <!-- Header with Application Status Bar -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 transition-all duration-300">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -337,7 +337,7 @@ onMounted(() => {
             <!-- Tab Navigation -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                 <div class="flex border-b border-gray-200 dark:border-gray-700">
-                    <button v-if="userRole === 'agent'"
+                    <button v-if="userRole !=='customer'"
                         @click="activeTab = 'customer'" 
                         :class="[
                             'px-4 py-3 text-sm font-medium transition-colors duration-200',
@@ -359,7 +359,7 @@ onMounted(() => {
                     >
                         Application Details
                     </button>
-                    <button v-if="userRole === 'agent'"
+                    <button v-if="userRole !== 'customer'"
                         @click="activeTab = 'workflow'" 
                         :class="[
                             'px-4 py-3 text-sm font-medium transition-colors duration-200',
@@ -494,76 +494,22 @@ onMounted(() => {
                                     <BanknotesIcon class="h-7 w-7 text-green-500 mr-2" />
                                     <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Salary Details</h3>
                                 </div>
-                            <div class="mt-8 space-y-6">
-
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                                <div>
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">Month</p>
-                                            <p class="font-medium text-gray-900 dark:text-white">{{ dateUtils.getMonthName((salary)?.month || '') }}</p>
-                                            </div>
-                                        <div>
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">Year</p>
-                                            <p class="font-medium text-gray-900 dark:text-white">{{ (salary)?.year }}</p>
-                                            </div>
-                                        <div class="col-span-1 md:col-span-2">
-                                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Income & Deduction Summary</p>
-                                            <div class="overflow-x-auto">
-                                                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                                    <thead class="bg-gray-100 dark:bg-gray-800">
-                                                        <tr>
-                                                            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Income</th>
-                                                            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Deduction</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody class="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
-                                                        <tr class="border border-gray-200 dark:border-gray-600">
-                                                            <td class="px-3 text-sm font-medium text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-600">
-                                                                <div v-if="(salary)?.income">
-                                                                    <div v-for="(item, index) in arrayUtils.safeJsonParse((salary)?.income)" :key="index" class="border-b border-gray-100 dark:border-gray-600 last:border-0 py-1">
-                                                                        {{ item.label }}: RM {{ item.amount }}
-                                        </div>
-                                            </div>
-                                                            </td>
-                                                            <td class="px-3 text-sm font-medium text-gray-900 dark:text-white">
-                                                                <div v-if="(salary)?.deduction">
-                                                                    <div v-for="(item, index) in arrayUtils.safeJsonParse((salary)?.deduction)" :key="index" class="border-b border-gray-100 dark:border-gray-600 last:border-0 py-1">
-                                                                        {{ item.label }}: RM {{ item.amount }}
-                                        </div>
-                                            </div>
-                                                            </td>
-                                                        </tr>
-                                                    </tbody>
-                                                    <tfoot class="bg-gray-100 dark:bg-gray-800">
-                                                        <tr>
-                                                            <td class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Income: RM {{ getTotalIncome((salary) || {}) }}
-                                                            </td>
-                                                            <td class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Deduction: RM {{ getTotalDeduction((salary) || {}) }}
-                                                            </td>
-                                                        </tr>
-                                                    </tfoot>
-                                                </table>
-                                        </div>
-                                </div>
-                                <div>
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">Nett Income</p>
-                                            <p class="font-medium text-gray-900 dark:text-white">RM {{ getNettIncome((salary) || {}) }}</p>
-                                </div>
-
-                                <div>
-                                            <p class="text-sm text-gray-500 dark:text-gray-400">Attachments</p>
-                                            <p class="font-medium text-gray-900 dark:text-white">
-                                                    <a v-if="(salary)?.attachements" 
-                                                :href="(salary)?.attachements" 
-                                                target="_blank" 
-                                                class="text-blue-500 hover:underline">
-                                                    View Attachment
-                                                </a>
-                                                <span v-else>No attachment available</span>
-                                            </p>
-                                        </div>
-                                        
-                                    </div>
-                                </div>
+                                <ul class="mt-3 space-y-2">
+                                    <li class="flex justify-between">
+                                        <span class="customer-details-item text-gray-500 dark:text-gray-400">Year:</span>
+                                        <span class="customer-details-item font-medium text-gray-900 dark:text-white px-2">{{ salary.year }}</span>
+                                    </li>
+                                    <li class="flex justify-between">
+                                        <span class="customer-details-item text-gray-500 dark:text-gray-400">Month:</span>
+                                        <span class="customer-details-item font-medium text-gray-900 dark:text-white px-2">{{ salary.month }}</span>
+                                    </li>
+                                    <li class="flex justify-between">
+                                        <span class="customer-details-item text-gray-500 dark:text-gray-400">Salary Attachment:</span>
+                                        <a v-if="salary.attachments" :href="'../storage/' + salary.attachments" target="_blank" class="text-blue-500 hover:underline">View Attachment</a>
+                                        <span v-else class="customer-details-item font-medium text-gray-900 dark:text-white px-2">No attachment available</span>
+                                    </li>
+                                    
+                                </ul>
 
                                 </div>
                                 <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-5">
@@ -812,7 +758,12 @@ onMounted(() => {
                                                     {{ item.user || 'System' }}
                                                 </span>
                                                 <StatusBadge :status="item.status" size="sm" />
-                                                            </div>
+                                                <span v-if="item.user_name || item.user_role" class="ml-1 text-xs">
+                                                    by 
+                                                    <span v-if="item.user_name" class="ml-1 text-xs">{{ item.user_name }}</span>
+                                                    <span v-if="item.user_role" class="ml-1 text-xs text-gray-400 dark:text-gray-500">({{ item.user_role.charAt(0).toUpperCase() + item.user_role.slice(1) }})</span>
+                                                </span>
+                                            </div>
                                             <div class="text-xs text-gray-500 dark:text-gray-400">
                                                 {{ item.created_at ? dateUtils.formatDate(item.created_at, 'DD MMMM YYYY, HH:mm') : 'N/A' }}
                                             </div>

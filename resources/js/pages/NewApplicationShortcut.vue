@@ -134,8 +134,9 @@ onMounted(async () => {
           <!-- Card Content -->
           <div class="p-6">
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ module.title }}</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">{{ module.description }}</p>
-            
+            <p class="text-gray-500 dark:text-gray-400 truncate max-w-xs mb-4" :title="module.description">
+                            {{ module.description.length > 50 ? module.description.slice(0, 50) + '...' : module.description }}
+                        </p>               
             <div class="grid grid-cols-2 gap-2 mb-6">
               <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Interest Rate</p>

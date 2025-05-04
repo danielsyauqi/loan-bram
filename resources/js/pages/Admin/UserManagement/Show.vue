@@ -138,7 +138,12 @@ const isModulePermitted = (moduleId: number) => {
                             <h2 class="text-2xl font-bold text-gray-800 dark:text-white">{{ user.name || 'No Name Provided' }}</h2>
                             <div class="flex flex-wrap gap-2 mt-2">
                                 <span class="px-3 py-1 text-sm rounded-full" :class="getRoleBadgeClass(user.role || '')">
-                                    {{ user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1, 4) + (user.role.length > 4 ? user.role.charAt(4).toUpperCase() + user.role.slice(5) : '')) : 'Unknown' }}
+                                    <template v-if="user.role === 'sub agent'">
+                                        {{ user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1, 4) + (user.role.length > 4 ? user.role.charAt(4).toUpperCase() + user.role.slice(5) : '')) : 'Unknown' }}
+                                    </template>
+                                    <template v-else>
+                                        {{ user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Unknown' }}
+                                    </template>
                                 </span>
                                 <span class="px-3 py-1 text-sm rounded-full" :class="getStatusBadgeClass(user.status || '')">
                                     {{ user.status ? (user.status.charAt(0).toUpperCase() + user.status.slice(1)) : 'Unknown' }}

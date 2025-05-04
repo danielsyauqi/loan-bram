@@ -56,6 +56,7 @@ const components = {
 const props = withDefaults(defineProps<{
     moduleId: number;
     applications: any;
+    admins: any;
     module?: {
         title: string;
         description: string;
@@ -124,6 +125,8 @@ const props = withDefaults(defineProps<{
         redemption_amount?: string;
         monthly_installment?: string;
         redemptionRemarks?: string;
+
+
     };
     error?: string;
     message?: string;
@@ -187,6 +190,7 @@ const props = withDefaults(defineProps<{
     }),
 });
 
+console.log(props.admins);
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -253,6 +257,7 @@ const form = useForm({
     customer_id: (props.foundUser || props.flash?.foundUser)?.id,
     workflow_remarks: '',
     tenure_applied: '',
+    for_admin: '',
 });
 
 // Add state variables for the applications list
@@ -521,6 +526,21 @@ const redirectToIndex = () => {
     window.location.href = route('loan-modules.applications', { moduleId: props.moduleId });
 };
 
+// Remove icInput computed property and use a formatter function for xxxxxx-xx-xxxx
+function formatICNumberInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    let value = input.value.replace(/\D/g, ''); // Only digits
+    if (value.length > 12) value = value.slice(0, 12);
+    if (value.length > 6 && value.length <= 8) {
+        value = value.replace(/(\d{6})(\d{1,})/, '$1-$2');
+    } else if (value.length > 8) {
+        value = value.replace(/(\d{6})(\d{2})(\d{1,})/, '$1-$2-$3');
+    }
+    else if (value.length > 6) {
+        value = value.replace(/(\d{6})(\d{1,})/, '$1-$2');
+    }
+    form.ic_number = value;
+}
 
 </script>
 
@@ -786,74 +806,29 @@ const redirectToIndex = () => {
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                 </svg>
                             </h3> 
-                            <div v-show="expandedSections.salaryInfo" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                                    <div>
-                                                <p class="text-sm text-gray-500 dark:text-gray-400">Month</p>
-                                                    <p class="font-medium text-gray-900 dark:text-white">{{ dateUtils.getMonthName((foundUser || flash?.foundUser)?.month  || 'N/A') }}</p>
-                                                </div>
-                                            <div>
-                                                <p class="text-sm text-gray-500 dark:text-gray-400">Year</p>
-                                                <p class="font-medium text-gray-900 dark:text-white">{{ (foundUser || flash?.foundUser)?.year }}</p>
-                                                </div>
-                                            <div class="col-span-1 md:col-span-2">
-                                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Income & Deduction Summary</p>
-                                                <div class="overflow-x-auto">
-                                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                                        <thead class="bg-gray-100 dark:bg-gray-800">
-                                                            <tr>
-                                                                <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Income</th>
-                                                                <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Deduction</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody class="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
-                                                            <tr class="border border-gray-200 dark:border-gray-600">
-                                                                <td class="px-3 text-sm font-medium text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-600">
-                                                                    <div v-if="(foundUser || flash?.foundUser)?.income">
-                                                                        <div v-for="(item, index) in arrayUtils.safeJsonParse((foundUser || flash?.foundUser)?.income)" :key="index" class="border-b border-gray-100 dark:border-gray-600 last:border-0 py-1">
-                                                                            {{ item.label }}: RM {{ item.amount }}
-                                            </div>
-                                                </div>
-                                                                </td>
-                                                                <td class="px-3 text-sm font-medium text-gray-900 dark:text-white">
-                                                                    <div v-if="(foundUser || flash?.foundUser)?.deduction">
-                                                                        <div v-for="(item, index) in arrayUtils.safeJsonParse((foundUser || flash?.foundUser)?.deduction)" :key="index" class="border-b border-gray-100 dark:border-gray-600 last:border-0 py-1">
-                                                                            {{ item.label }}: RM {{ item.amount }}
-                                            </div>
-                                                </div>
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                        <tfoot class="bg-gray-100 dark:bg-gray-800">
-                                                            <tr>
-                                                                <td class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Income: RM {{ getTotalIncome((foundUser || flash?.foundUser) || {}) }}
-                                                                </td>
-                                                                <td class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Deduction: RM {{ getTotalDeduction((foundUser || flash?.foundUser) || {}) }}
-                                                                </td>
-                                                            </tr>
-                                                        </tfoot>
-                                                    </table>
-                                            </div>
-                                        </div>
-                                    <div>
-                                                <p class="text-sm text-gray-500 dark:text-gray-400">Nett Income</p>
-                                                <p class="font-medium text-gray-900 dark:text-white">RM {{ getNettIncome((foundUser || flash?.foundUser) || {}) }}</p>
-                                            </div>
-                                            
-                                            <div>
-                                                <p class="text-sm text-gray-500 dark:text-gray-400">Attachments</p>
-                                                <p class="font-medium text-gray-900 dark:text-white">
-                                                        <a v-if="(foundUser || flash?.foundUser)?.attachements" 
-                                                    :href="(foundUser || flash?.foundUser)?.attachements" 
-                                                    target="_blank" 
-                                                    class="text-blue-500 hover:underline">
-                                                        View Attachment
-                                                    </a>
-                                                    <span v-else>No attachment available</span>
-                                                </p>
-                                            </div>
-                                            
-                                        </div>
-                                    </div>
+                            <div v-show="expandedSections.salaryInfo" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                <div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Month</p>
+                                    <p class="font-medium text-gray-900 dark:text-white">{{ dateUtils.getMonthName((foundUser || flash?.foundUser)?.month || '') }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Year</p>
+                                    <p class="font-medium text-gray-900 dark:text-white">{{ (foundUser || flash?.foundUser)?.year }}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Attachments</p>
+                                    <p class="font-medium text-gray-900 dark:text-white">
+                                        <a v-if="(foundUser || flash?.foundUser)?.attachements" 
+                                           :href="(foundUser || flash?.foundUser)?.attachements" 
+                                           target="_blank" 
+                                           class="text-blue-500 hover:underline">
+                                            View Attachment
+                                        </a>
+                                        <span v-else>No attachment available</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
 
                                     <div class="mt-8 space-y-6">
                                             <h3 @click="toggleSection('redemptionInfo')" class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center cursor-pointer">
@@ -1176,20 +1151,22 @@ const redirectToIndex = () => {
                             </label>
                             <div class="mt-1">
                                     <input 
-                                    v-model="form.ic_number"
-                                    type="text"
-                                    id="ic_number"
-                                    name="ic_number"
-                                    placeholder="Enter IC number (e.g., 900101011234)"
-                                    class="px-2 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
-                                    :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.ic_number }"
-                                />
+                                        v-model="form.ic_number"
+                                        @input="formatICNumberInput"
+                                        type="text"
+                                        id="ic_number"
+                                        name="ic_number"
+                                        maxlength="14"
+                                        class="px-2 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
+                                        :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.ic_number }"
+                                        placeholder="xxxxxx-xx-xxxx"
+                                    />
                                 </div>
                             <p v-if="form.errors.ic_number" class="mt-1 text-sm text-red-600 dark:text-red-400">
                                 {{ form.errors.ic_number }}
                             </p>
                             <p v-else class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                Please enter IC number without spaces or dashes
+                                Please enter IC number in the format xxxxxx-xx-xxxx.
                             </p>
                             </div>
                         <div class="flex justify-end">
@@ -1244,6 +1221,41 @@ const redirectToIndex = () => {
                         <div>
                             <div class="text-sm text-gray-500 dark:text-gray-400">Interest Rate</div>
                             <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ module.interestRate }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="foundUser || flash?.foundUser" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 h-fit">
+                    <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">For Admin Selection</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="for_admin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Select Admin
+                            </label>
+                            <div class="mt-1">
+                                <select
+                                    v-model="form.for_admin"
+                                    id="for_admin"
+                                    name="for_admin"
+                                    class="px-2 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
+                                    :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.for_admin }"
+                                >
+                                    <option value="">Select an admin</option>
+                                    <option
+                                        v-for="admin in props.admins"
+                                        :key="admin.id"
+                                        :value="admin.id"
+                                    >
+                                        {{ admin.name }} ({{ admin.email }})
+                                    </option>
+                                </select>
+                                <p v-if="form.errors.for_admin" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                    {{ form.errors.for_admin }}
+                                </p>
+                                <p v-else class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    Please select an admin to assign this application
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>

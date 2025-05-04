@@ -39,6 +39,7 @@ const components = {
 // Add default values to the props
 const props = withDefaults(defineProps<{
     moduleId?: number;
+    admins?: any;
     application?: any;
     allModules: any;
     module?: {
@@ -140,6 +141,7 @@ const form = useForm({
     rates: '',
     document_checklist: [],
     date_received: '',
+    for_admin: '',
     agent_id: '',
     product_id: '',
     customer_id: (props.user)?.id,
@@ -588,6 +590,7 @@ onMounted(() => {
     form.date_approved = props.application?.date_approved || '';
     form.date_disbursed = props.application?.date_disbursed || '';
     form.date_rejected = props.application?.date_rejected || '';
+    form.for_admin = props.application?.admin_id || '';
 
     form.document_checklist = props.application?.document_checklist ? 
         (typeof props.application.document_checklist === 'string' ? 
@@ -692,6 +695,7 @@ const saveApplication = (field = null, value = null) => {
             date_rejected: form.date_rejected,
             product_id: form.product_id,
             document_checklist: form.document_checklist,
+            for_admin: form.for_admin,
         };
     }
 
@@ -929,63 +933,19 @@ const saveApplication = (field = null, value = null) => {
                                     <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                                 </svg>
                             </h3> 
-                            <div v-show="expandedSections.salaryInfo" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                        <div>
+                            <div v-show="expandedSections.salaryInfo" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                <div>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">Month</p>
                                     <p class="font-medium text-gray-900 dark:text-white">{{ dateUtils.getMonthName((salaries)?.month || '') }}</p>
-                                    </div>
+                                </div>
                                 <div>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">Year</p>
                                     <p class="font-medium text-gray-900 dark:text-white">{{ (salaries)?.year }}</p>
-                                    </div>
-                                <div class="col-span-1 md:col-span-2">
-                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Income & Deduction Summary</p>
-                                    <div class="overflow-x-auto">
-                                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                            <thead class="bg-gray-100 dark:bg-gray-800">
-                                                <tr>
-                                                    <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Income</th>
-                                                    <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Deduction</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
-                                                <tr class="border border-gray-200 dark:border-gray-600">
-                                                    <td class="px-3 text-sm font-medium text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-600">
-                                                        <div v-if="(salaries)?.income">
-                                                            <div v-for="(item, index) in arrayUtils.safeJsonParse((salaries)?.income)" :key="index" class="border-b border-gray-100 dark:border-gray-600 last:border-0 py-1">
-                                                                {{ item.label }}: RM {{ item.amount }}
                                 </div>
-                                    </div>
-                                                    </td>
-                                                    <td class="px-3 text-sm font-medium text-gray-900 dark:text-white">
-                                                        <div v-if="(salaries)?.deduction">
-                                                            <div v-for="(item, index) in arrayUtils.safeJsonParse((salaries)?.deduction)" :key="index" class="border-b border-gray-100 dark:border-gray-600 last:border-0 py-1">
-                                                                {{ item.label }}: RM {{ item.amount }}
-                                </div>
-                                    </div>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                            <tfoot class="bg-gray-100 dark:bg-gray-800">
-                                                <tr>
-                                                    <td class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Income: RM {{ getTotalIncome((salaries) || {}) }}
-                                                    </td>
-                                                    <td class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Deduction: RM {{ getTotalDeduction((salaries) || {}) }}
-                                                    </td>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                </div>
-                            </div>
-                        <div>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">Nett Income</p>
-                                    <p class="font-medium text-gray-900 dark:text-white">RM {{ getNettIncome((salaries) || {}) }}</p>
-                                </div>
-                                
                                 <div>
                                     <p class="text-sm text-gray-500 dark:text-gray-400">Attachments</p>
                                     <p class="font-medium text-gray-900 dark:text-white">
-                                            <a v-if="(salaries)?.attachements" 
+                                        <a v-if="(salaries)?.attachements" 
                                            :href="(salaries)?.attachements" 
                                            target="_blank" 
                                            class="text-blue-500 hover:underline">
@@ -994,7 +954,6 @@ const saveApplication = (field = null, value = null) => {
                                         <span v-else>No attachment available</span>
                                     </p>
                                 </div>
-                                
                             </div>
                         </div>
 
@@ -1426,8 +1385,14 @@ const saveApplication = (field = null, value = null) => {
                                                     <div class="bg-gray-50 dark:bg-gray-700 rounded-md p-2">
                                                         <div class="flex justify-between items-center">
                                                             <div class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">
-                                                                {{ item.created_at ? dateUtils.formatDate(item.created_at, 'DD MMMM YYYY, HH:mm') : 'N/A' }} <StatusBadge :status="item.status" size ="sm" class="ml-1" />
-                                                                <span v-if="item.user" class="ml-1">by {{ item.user }}</span>
+                                                                {{ item.created_at ? dateUtils.formatDate(item.created_at, 'DD MMMM YYYY, HH:mm') : 'N/A' }} 
+                                                                <StatusBadge :status="item.status" size ="sm" class="ml-1" />
+                                                                <span v-if="item.user_name || item.user_role" class="ml-1">
+                                                                    by 
+                                                                    <span v-if="item.user_name">{{ item.user_name }}</span>
+                                                                    <span v-if="item.user_role" class="ml-1 text-xs text-gray-400 dark:text-gray-500">({{ item.user_role.charAt(0).toUpperCase() + item.user_role.slice(1) }})</span>
+                                                                </span>
+                                                                <span v-else-if="item.user" class="ml-1">by {{ item.user }}</span>
                                                             </div>
                                                             <div class="flex gap-2">
                                                                 <button 
@@ -1472,6 +1437,11 @@ const saveApplication = (field = null, value = null) => {
                                                             <div class="text-xs text-gray-500 dark:text-gray-400 mb-0.5">
                                                                 {{ props.application?.updated_at ? dateUtils.formatDate(props.application.updated_at, 'DD MMM YYYY, HH:mm') : 'N/A' }} 
                                                                 <StatusBadge :status="props.application?.status || 'New'" size="sm" class="ml-1" />
+                                                                <span v-if="props.application?.user_name || props.application?.user_role" class="ml-1">
+                                                                    by 
+                                                                    <span v-if="props.application?.user_name">{{ props.application.user_name }}</span>
+                                                                    <span v-if="props.application?.user_role" class="ml-1 text-xs text-gray-400 dark:text-gray-500">({{ props.application.user_role }})</span>
+                                                                </span>
                                                             </div>
                                                             <div class="flex gap-2">
                                                                 <button 
@@ -1622,6 +1592,41 @@ const saveApplication = (field = null, value = null) => {
                         <div>
                             <div class="text-sm text-gray-500 dark:text-gray-400">Interest Rate</div>
                             <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ module.interestRate }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 h-fit">
+                    <h2 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">For Admin Selection</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="for_admin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Select Admin
+                            </label>
+                            <div class="mt-1">
+                                <select
+                                    v-model="form.for_admin"
+                                    id="for_admin"
+                                    name="for_admin"
+                                    class="px-2 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
+                                    :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.for_admin }"
+                                >
+                                    <option value="">Select an admin</option>
+                                    <option
+                                        v-for="admin in props.admins"
+                                        :key="admin.id"
+                                        :value="admin.id"
+                                    >
+                                        {{ admin.name }} ({{ admin.email }})
+                                    </option>
+                                </select>
+                                <p v-if="form.errors.for_admin" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                                    {{ form.errors.for_admin }}
+                                </p>
+                                <p v-else class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                    Please select an admin to assign this application
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>

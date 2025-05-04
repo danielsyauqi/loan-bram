@@ -38,11 +38,14 @@ class LoanApplicationController extends Controller
         $error = null;
         
         if ($request->isMethod('post') && $request->has('ic_number')) {
-            // Log the search request for debugging
-            Log::info('Searching for user with IC: ' . $request->ic_number);
+
+            // Remove all non-digit characters from IC number before searching
+            $cleanIcNumber = preg_replace('/\D/', '', $request->ic_number);
+            $request->merge(['ic_number' => $cleanIcNumber]);
+            Log::info('Searching for user with IC: ' . $cleanIcNumber);
             
             // Search for user by IC number
-            $user = User::where('ic_num', $request->ic_number)->first();
+            $user = User::where('ic_num', $cleanIcNumber)->first();
             
             if ($user) {
                 // Log found user for debugging
@@ -256,7 +259,8 @@ class LoanApplicationController extends Controller
                 
                 // Log found user for debugging
                 Log::info('User found: ' . $user->name);
-            
+
+
                 
                 // Only return necessary user data
                 $foundUser = [
@@ -313,6 +317,8 @@ class LoanApplicationController extends Controller
             ->get();
 
         $products = Products::where('module_id', $moduleId)->get();
+        $admins = User::where('role', 'admin')->get();
+
         
         // Always return an Inertia response
         return Inertia::render('LoanApplications/Create', [
@@ -335,7 +341,9 @@ class LoanApplicationController extends Controller
             'products' => $products,
             'foundUser' => $foundUser,
             'applications' => $applications,
-            'error' => $error
+            'error' => $error,
+            'admins' => $admins,
+
         ]);
     }
 
@@ -414,6 +422,17 @@ class LoanApplicationController extends Controller
             if ($request->has('product_id')) {
                 $application->product_id = $request->product_id;
             }
+
+            if ($request->has('for_admin')) {
+                $application->admin_id = $request->for_admin;
+                $notification = new Notification();
+                $notification->sender_id = Auth::user()->id;
+                $notification->receiver_id = $request->for_admin;
+                $notification->status = 'unread';
+                $notification->reference_id = $reference_id;
+                $notification->message = 'You have been assigned as Admin for loan application #' . $reference_id;
+                $notification->save();
+            }
             
             $application->status = 'New';
             $application->save();
@@ -425,6 +444,7 @@ class LoanApplicationController extends Controller
                 $workflowRemark->application_id = $application->id;
                 $workflowRemark->status = 'New';
                 $workflowRemark->remarks = $request->workflow_remarks;
+                $workflowRemark->user_id = Auth::user()->id;
                 $workflowRemark->save();
             }
 
@@ -492,6 +512,15 @@ class LoanApplicationController extends Controller
             ->get();
 
         $products = Products::where('module_id', $moduleId)->get();
+        $admins = User::where('role', 'admin')->get();
+        
+        // Attach user name and role to each workflow remark
+        $workflow_remarks = $workflow_remarks->map(function ($remark) {
+            $user = User::find($remark->user_id);
+            $remark->user_name = $user ? $user->name : null;
+            $remark->user_role = $user ? $user->role : null;
+            return $remark;
+        });
         
         // Always return an Inertia response
         return Inertia::render('LoanApplications/Show', [
@@ -524,6 +553,7 @@ class LoanApplicationController extends Controller
             'workflow_remarks' => $workflow_remarks,
             'flash' => session()->get('flash') ?? null,
             'success' => session()->get('success') ?? null,
+            'admins' => $admins,
         ]);
     }
 
@@ -540,6 +570,7 @@ class LoanApplicationController extends Controller
         $workflow = WorkflowRemarks::findOrFail($workflowId);
         $workflow->remarks = $request->remarks;
         $workflow->status = $request->status;
+        $workflow->user_id = Auth::user()->id;
         $workflow->save();
 
         return redirect()->back()->with('success', 'Workflow updated successfully')->with('fragment', 'workflow-remarks-timeline');
@@ -583,6 +614,7 @@ class LoanApplicationController extends Controller
             $workflow->application_id = $applicationId;
             $workflow->remarks = $request->remarks;
             $workflow->status = $request->status;
+            $workflow->user_id = Auth::user()->id;
             $workflow->save();
 
             $application = LoanApplications::findOrFail($applicationId);
@@ -646,13 +678,14 @@ class LoanApplicationController extends Controller
                 'date_rejected' => 'nullable|date',
                 'product_id' => 'nullable|exists:products,id',
                 'fields' => 'nullable|array',
+                'for_admin' => 'nullable|exists:users,id',
             ]);
             
             // Get all validated fields that are present in the request
             $fieldsToUpdate = $request->only([
                 'rates', 'biro', 'banca', 'tenure_applied', 'date_received',
                 'amount_applied', 'amount_approved', 'amount_disbursed',
-                'tenure_approved', 'date_approved', 'date_disbursed', 'date_rejected', 'product_id'
+                'tenure_approved', 'date_approved', 'date_disbursed', 'date_rejected', 'product_id', 'for_admin'
             ]);
             
             // If fields array is provided, process multiple fields at once
@@ -661,7 +694,7 @@ class LoanApplicationController extends Controller
                     if (in_array($field, [
                         'rates', 'biro', 'banca', 'tenure_applied', 'date_received',
                         'amount_applied', 'amount_approved', 'amount_disbursed',
-                        'tenure_approved', 'date_approved', 'date_disbursed', 'date_rejected', 'product_id'
+                        'tenure_approved', 'date_approved', 'date_disbursed', 'date_rejected', 'product_id', 'for_admin'
                     ])) {
                         $fieldsToUpdate[$field] = $value;
                     }
@@ -690,6 +723,19 @@ class LoanApplicationController extends Controller
                         'message' => 'You have been assigned as Master Agent for loan application #' . $application->reference_id
                     ]);
                 }
+            }
+
+            if ($request->has('for_admin')) {
+                $application->admin_id = $request->for_admin;
+                $application->save();
+                
+                $notification = new Notification();
+                $notification->sender_id = Auth::user()->id;
+                $notification->receiver_id = $request->for_admin;
+                $notification->status = 'unread';
+                $notification->reference_id = $application->reference_id;
+                $notification->message = 'You have been assigned as Admin for loan application #' . $application->reference_id;
+                $notification->save();
             }
             
             $application->save();
@@ -910,16 +956,8 @@ class LoanApplicationController extends Controller
     public function list()
     {
         $applications = LoanApplications::all();
-        // Initialize module as null
-        $module = null;
+
         
-        // Get the first application's module if applications exist
-        if ($applications->isNotEmpty()) {
-            $firstApplication = $applications->first();
-            if ($firstApplication->module_id) {
-                $module = LoanModules::find($firstApplication->module_id);
-            }
-        }
         $isAdmin = Auth::user()->role === 'admin';
 
         $permissions = [
@@ -947,6 +985,8 @@ class LoanApplicationController extends Controller
                         'biro' => $application->biro ?? '',
                         'banca' => $application->banca ?? '',
                         'rates' => $application->rates ?? 0,
+                        'module_id' => $application->module_id ?? null,
+                        'moduleSlug' => $application->module->slug ?? null,
                         'document_checklist' => $application->document_checklist ? json_decode($application->document_checklist) : [],
                         'date_received' => $application->date_received ?? null,
                         'date_rejected' => $application->date_rejected ?? null,
@@ -979,6 +1019,8 @@ class LoanApplicationController extends Controller
                         'biro' => $application->biro ?? '',
                         'banca' => $application->banca ?? '',
                         'rates' => $application->rates ?? 0,
+                        'module_id' => $application->module_id ?? null,
+                        'moduleSlug' => $application->module->slug ?? null,
                         'document_checklist' => $application->document_checklist ? json_decode($application->document_checklist) : [],
                         'date_received' => $application->date_received ?? null,
                         'date_rejected' => $application->date_rejected ?? null,
@@ -1012,6 +1054,8 @@ class LoanApplicationController extends Controller
                         'biro' => $application->biro ?? '',
                         'banca' => $application->banca ?? '',
                         'rates' => $application->rates ?? 0,
+                        'module_id' => $application->module_id ?? null,
+                        'moduleSlug' => $application->module->slug ?? null,
                         'document_checklist' => $application->document_checklist ? json_decode($application->document_checklist) : [],
                         'date_received' => $application->date_received ?? null,
                         'date_rejected' => $application->date_rejected ?? null,
@@ -1035,7 +1079,6 @@ class LoanApplicationController extends Controller
 
         return Inertia::render('LoanApplications/List', [
             'applications' => $applications,
-            'moduleSlug' => $module->slug ?? null,
             'isAdmin' => $isAdmin,
             'permissions' => $permissions,
             'flash' => $flash

@@ -16,7 +16,8 @@ class WorkflowRemarks extends Model
         'status',
         'user',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'user_id'
     ];
 
     public function application()

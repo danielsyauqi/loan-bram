@@ -47,9 +47,8 @@ class CustomerController extends Controller
                 'total' => $applications->count(),
                 'new' => $applications->where('status', 'New')->count(),
                 'processing' => $applications->whereIn('status', ['Processing', 'Pending', 'Pending@Agency', 'Pending@Bank', 'Ready to Submit'])->count(),
-                'approved' => $applications->where('status', 'Approved')->count(),
+                'approved' => $applications->where('status', 'Approved')->where('status', 'Disbursed')->count(),
                 'rejected' => $applications->whereIn('status', ['Rejected','Delete Request'])->count(),
-                'disbursed' => $applications->where('status', 'Disbursed')->count(),
             ];
             
             return Inertia::render('CustomerDashboard', [
@@ -122,6 +121,14 @@ class CustomerController extends Controller
             $sub_agent = User::where('role' , 'sub agent')->get();
             $currentSubAgent = User::where('id', $application->sub_agent_id)->first();
             $workflow_remarks = WorkflowRemarks::where('application_id', $application->id)->get();
+
+            // Attach user name and role to each workflow remark
+            $workflow_remarks = $workflow_remarks->map(function ($remark) {
+                $user = User::find($remark->user_id);
+                $remark->user_name = $user ? $user->name : null;
+                $remark->user_role = $user ? $user->role : null;
+                return $remark;
+            });
             
             return Inertia::render('Customer/Applications/Show', [
                 'application' => $application ?? [],
@@ -487,6 +494,14 @@ class CustomerController extends Controller
             $sub_agent = User::where('id', $application->sub_agent_id)->first();
             $workflow_remarks = WorkflowRemarks::where('application_id', $application->id)->get();
             $sub_agents = User::where('role', 'Sub Agent')->get();
+
+            // Attach user name and role to each workflow remark
+            $workflow_remarks = $workflow_remarks->map(function ($remark) {
+                $user = User::find($remark->user_id);
+                $remark->user_name = $user ? $user->name : null;
+                $remark->user_role = $user ? $user->role : null;
+                return $remark;
+            });
             
             return Inertia::render('Customer/Applications/Show', [
                 'application' => $application,
@@ -609,8 +624,6 @@ class CustomerController extends Controller
                 [
                     'month' => $request->month,
                     'year' => $request->year,
-                    'income' => $request->income,
-                    'deduction' => $request->deduction,
                 ]
             );
 

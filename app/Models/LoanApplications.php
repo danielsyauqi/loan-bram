@@ -34,7 +34,8 @@ class LoanApplications extends Model
         'created_at',
         'updated_at',
         'application_id',
-        'reference_id'
+        'reference_id',
+        'admin_id',
         
     ];
 
@@ -46,6 +47,11 @@ class LoanApplications extends Model
     public function customer()
     {
         return $this->belongsTo(User::class, 'customer_id');
+    }
+
+    public function admin()
+    {
+        return $this->belongsTo(User::class, 'admin_id');
     }
 
     public function agent()

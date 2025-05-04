@@ -560,6 +560,7 @@ const submit = () => {
                                         >
                                             <option value="active">Active</option>
                                             <option value="inactive">Inactive</option>
+                                            <option value="not verified">Not Verified</option>
                                         </select>
                                         <div v-if="form.errors.status" class="text-red-500 text-sm mt-1">{{ form.errors.status }}</div>
                                         <p v-else class="text-xs text-gray-600 dark:text-gray-400">
@@ -679,7 +680,7 @@ const submit = () => {
                                             v-model="form.bank_name"
                                             class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         >
-                                            <option value="" disabled selected>Select a bank</option>
+                                            <option value="" selected>Select a bank</option>
                                             <option v-for="bank in bankSelection()" :key="bank.code" :value="bank.name">
                                                 {{ bank.name }}
                                             </option>
@@ -816,6 +817,29 @@ const submit = () => {
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                                     <!-- Module Permissions -->
                                     <div class="md:col-span-2">
+                                        <!-- Add All Modules Checkbox -->
+                                        <div class="mb-4 flex items-start">
+                                            <div class="flex items-center h-5">
+                                                <input
+                                                    id="select-all-modules"
+                                                    type="checkbox"
+                                                    :checked="form.module_permissions.length === props.loanModules.length"
+                                                    @change="(e) => {
+                                                        const target = e.target as HTMLInputElement;
+                                                        if (target && target.checked) {
+                                                            form.module_permissions = props.loanModules.map(module => module.id);
+                                                        } else {
+                                                            form.module_permissions = [];
+                                                        }
+                                                    }"
+                                                    class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600"
+                                                />
+                                            </div>
+                                            <div class="ml-3 text-sm">
+                                                <label for="select-all-modules" class="font-medium text-gray-700 dark:text-gray-300">Add All Modules</label>
+                                                <p class="text-gray-500 dark:text-gray-400">Select or deselect all modules at once</p>
+                                            </div>
+                                        </div>
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div v-for="module in props.loanModules" :key="module.id" class="flex items-start">
                                                 <div class="flex items-center h-5">
@@ -829,7 +853,9 @@ const submit = () => {
                                                 </div>
                                                 <div class="ml-3 text-sm">
                                                     <label :for="`module-${module.id}`" class="font-medium text-gray-700 dark:text-gray-300">{{ module.name }} <span class="ml-2"><StatusBadge :status="module.status" :size="'sm'" /></span></label>
-                                                    <p class="text-gray-500 dark:text-gray-400">{{ module.description }}</p>    
+                                                    <p class="text-gray-500 dark:text-gray-400 truncate max-w-xs" :title="module.description">
+                                                        {{ module.description.length > 50 ? module.description.slice(0, 30) + '...' : module.description }}
+                                                    </p>    
                                                 </div>
                                             </div>
                                         </div>

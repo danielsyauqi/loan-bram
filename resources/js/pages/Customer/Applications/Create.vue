@@ -29,6 +29,7 @@ interface PageProps {
 const page = usePage<PageProps>();
 const user = computed(() => page.props.auth?.user);
 const userStatus = computed(() => (user.value as any)?.status || 'not active');
+const userRole = computed(() => (user.value as any)?.role || 'guest');
 
 // Props
 const props = withDefaults(defineProps<{
@@ -195,7 +196,11 @@ const closeErrorModal = () => {
 
 // Redirect after success
 const redirectToDashboard = () => {
-  window.location.href = route('customer.dashboard');
+  if(userRole.value === 'customer'){
+    window.location.href = route('customer.dashboard');
+  }else{
+    window.location.href = route('dashboard');
+  }
 };
 
 const redirectToIdentityForm = () => {
@@ -352,87 +357,41 @@ watch(() => form.information_correct && form.terms_agreed, (newValue) => {
             </div>
             
             <div class="mt-8 space-y-6">
-                    <h3 @click="toggleSection('salaryInfo')" class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cash-coin h-5 w-5 mr-2 text-blue-500" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="M11 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8m5-4a5 5 0 1 1-10 0 5 5 0 0 1 10 0"/>
-                        <path d="M9.438 11.944c.047.596.518 1.06 1.363 1.116v.44h.375v-.443c.875-.061 1.386-.529 1.386-1.207 0-.618-.39-.936-1.09-1.1l-.296-.07v-1.2c.376.043.614.248.671.532h.658c-.047-.575-.54-1.024-1.329-1.073V8.5h-.375v.45c-.747.073-1.255.522-1.255 1.158 0 .562.378.92 1.007 1.066l.248.061v1.272c-.384-.058-.639-.27-.696-.563h-.668zm1.36-1.354c-.369-.085-.569-.26-.569-.522 0-.294.216-.514.572-.578v1.1zm.432.746c.449.104.655.272.655.569 0 .339-.257.571-.709.614v-1.195z"/>
-                        <path d="M1 0a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h4.083q.088-.517.258-1H3a2 2 0 0 0-2-2V3a2 2 0 0 0 2-2h10a2 2 0 0 0 2 2v3.528c.38.34.717.728 1 1.154V1a1 1 0 0 0-1-1z"/>
-                        <path d="M9.998 5.083 10 5a2 2 0 1 0-3.132 1.65 6 6 0 0 1 3.13-1.567"/>
-                    </svg>
-                    Salary Information
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 transform transition-transform" :class="{ 'rotate-180': !expandedSections.salaryInfo }" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
-                </h3> 
-                <div v-show="expandedSections.salaryInfo" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-            <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Month</p>
-                        <p class="font-medium text-gray-900 dark:text-white">{{ dateUtils.getMonthName((salary)?.month || '') }}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Year</p>
-                        <p class="font-medium text-gray-900 dark:text-white">{{ (salary)?.year }}</p>
-                    </div>
-                    <div class="col-span-1 md:col-span-2">
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Income & Deduction Summary</p>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead class="bg-gray-100 dark:bg-gray-800">
-                                    <tr>
-                                        <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Income</th>
-                                        <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Deduction</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
-                                    <tr class="border border-gray-200 dark:border-gray-600">
-                                        <td class="px-3 text-sm font-medium text-gray-900 dark:text-white border-r border-gray-200 dark:border-gray-600">
-                                            <div v-if="(salary)?.income">
-                                                <div v-for="(item, index) in arrayUtils.safeJsonParse((salary)?.income)" :key="index" class="border-b border-gray-100 dark:border-gray-600 last:border-0 py-1">
-                                                    {{ item.label }}: RM {{ item.amount }}
-                    </div>
-                        </div>
-                                        </td>
-                                        <td class="px-3 text-sm font-medium text-gray-900 dark:text-white">
-                                            <div v-if="(salary)?.deduction">
-                                                <div v-for="(item, index) in arrayUtils.safeJsonParse((salary)?.deduction)" :key="index" class="border-b border-gray-100 dark:border-gray-600 last:border-0 py-1">
-                                                    {{ item.label }}: RM {{ item.amount }}
-                    </div>
-                        </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                                <tfoot class="bg-gray-100 dark:bg-gray-800">
-                                    <tr>
-                                        <td class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Income: RM {{ getTotalIncome((salary) || {}) }}
-                                        </td>
-                                        <td class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Deduction: RM {{ getTotalDeduction((salary) || {}) }}
-                                        </td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                    </div>
-                </div>
-            <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Nett Income</p>
-                        <p class="font-medium text-gray-900 dark:text-white">RM {{ getNettIncome((salary) || {}) }}</p>
-                    </div>
-                    
-                    <div>
-                        <p class="text-sm text-gray-500 dark:text-gray-400">Attachments</p>
-                        <p class="font-medium text-gray-900 dark:text-white">
-                                <a v-if="(salary)?.attachments" 
-                                :href="'/storage/' + (salary)?.attachments" 
-                                target="_blank" 
-                                class="text-blue-500 hover:underline">
-                                View Attachment
-                            </a>
-                            <span v-else class="font-medium text-gray-900 dark:text-white">No attachments</span>
-                        </p>
-                    </div>
-                    
-                </div>
-            </div>
-
+                <h3 @click="toggleSection('salaryInfo')" class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center cursor-pointer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-cash-coin h-5 w-5 mr-2 text-blue-500" viewBox="0 0 16 16">
+                      <path fill-rule="evenodd" d="M11 15a4 4 0 1 0 0-8 4 4 0 0 0 0 8m5-4a5 5 0 1 1-10 0 5 5 0 0 1 10 0"/>
+                      <path d="M9.438 11.944c.047.596.518 1.06 1.363 1.116v.44h.375v-.443c.875-.061 1.386-.529 1.386-1.207 0-.618-.39-.936-1.09-1.1l-.296-.07v-1.2c.376.043.614.248.671.532h.658c-.047-.575-.54-1.024-1.329-1.073V8.5h-.375v.45c-.747.073-1.255.522-1.255 1.158 0 .562.378.92 1.007 1.066l.248.061v1.272c-.384-.058-.639-.27-.696-.563h-.668zm1.36-1.354c-.369-.085-.569-.26-.569-.522 0-.294.216-.514.572-.578v1.1zm.432.746c.449.104.655.272.655.569 0 .339-.257.571-.709.614v-1.195z"/>
+                      <path d="M1 0a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h4.083q.088-.517.258-1H3a2 2 0 0 0-2-2V3a2 2 0 0 0 2-2h10a2 2 0 0 0 2 2v3.528c.38.34.717.728 1 1.154V1a1 1 0 0 0-1-1z"/>
+                      <path d="M9.998 5.083 10 5a2 2 0 1 0-3.132 1.65 6 6 0 0 1 3.13-1.567"/>
+                  </svg>
+                  Salary Information
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2 transform transition-transform" :class="{ 'rotate-180': !expandedSections.salaryInfo }" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+              </h3> 
+              <div v-show="expandedSections.salaryInfo" class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <div>
+                      <p class="text-sm text-gray-500 dark:text-gray-400">Month</p>
+                      <p class="font-medium text-gray-900 dark:text-white">{{ dateUtils.getMonthName((salary)?.month || '') }}</p>
+                  </div>
+                  <div>
+                      <p class="text-sm text-gray-500 dark:text-gray-400">Year</p>
+                      <p class="font-medium text-gray-900 dark:text-white">{{ (salary)?.year }}</p>
+                  </div>
+                  <div>
+                      <p class="text-sm text-gray-500 dark:text-gray-400">Attachments</p>
+                      <p class="font-medium text-gray-900 dark:text-white">
+                          <a v-if="salary.attachements" 
+                              :href="salary.attachements" 
+                              target="_blank" 
+                              class="text-blue-500 hover:underline">
+                              View Attachment
+                          </a>
+                          <span v-else>No attachment available</span>
+                      </p>
+                  </div>
+              </div>
+          </div>
             <div class="mt-8 space-y-6">
                     <h3 @click="toggleSection('redemptionInfo')" class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bank h-5 w-5 mr-2 text-blue-500" viewBox="0 0 16 16">

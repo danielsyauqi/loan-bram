@@ -89,7 +89,6 @@ const form = useForm({
     city: props.address?.city || '',
     state: props.address?.state || '',
     zip: props.address?.zip || '',
-    country: props.address?.country || '',
     
     // Employment fields
     company_name: props.employment?.company_name || '',
@@ -108,8 +107,6 @@ const form = useForm({
     account_num: props.employment?.account_num || '',
 
     // Initialize with string values
-    income: JSON.stringify(incomeItems.value),
-    deduction: JSON.stringify(deductionItems.value),
     month: props.salary?.month || '',
     year: props.salary?.year || '',
     attachment: props.salary?.attachment || props.salary?.attachments || '',
@@ -130,14 +127,7 @@ const form = useForm({
 
 
 
-// Update form data for income and deductions separately
-const updateIncome = () => {
-    form.income = JSON.stringify(incomeItems.value);
-};
 
-const updateDeduction = () => {
-    form.deduction = JSON.stringify(deductionItems.value);
-};
 
 const viewAttachment = () => {
     if (!form.attachment) return;
@@ -151,38 +141,6 @@ const viewAttachment = () => {
     }
 };
 
-// Function to add new salary item
-const addIncomeItem = () => {
-    incomeItems.value.push({ 
-        label: '', 
-        amount: '' 
-    });
-    updateIncome();
-};
-
-const addDeductionItem = () => {
-    deductionItems.value.push({ 
-        label: '', 
-        amount: '' 
-    });
-    updateDeduction();
-};
-
-// Function to remove salary item
-const removeIncomeItem = (index: number) => {
-    if (incomeItems.value.length > 1) {
-        incomeItems.value.splice(index, 1);
-        updateIncome();
-    }
-};
-
-// Function to remove deduction item
-const removeDeductionItem = (index: number) => {
-    if (deductionItems.value.length > 1) {
-        deductionItems.value.splice(index, 1);
-        updateDeduction();
-    }
-};
 
 // Add validation modal state
 const showValidationModal = ref(false);
@@ -209,7 +167,6 @@ const validateForm = () => {
     if (!form.city) validationErrors.value.push('City is required');
     if (!form.state) validationErrors.value.push('State is required');
     if (!form.zip) validationErrors.value.push('Zip/Postal Code is required');
-    if (!form.country) validationErrors.value.push('Country is required');
     
     // Employment Information validation
     if (!form.company_name) validationErrors.value.push('Company Name is required');
@@ -228,23 +185,6 @@ const validateForm = () => {
     if (!form.month) validationErrors.value.push('Salary Month is required');
     if (!form.year) validationErrors.value.push('Salary Year is required');
     if (!form.attachment) validationErrors.value.push('Salary Attachment is required');
-    
-    // Check if we have any income items with empty fields
-    incomeItems.value.forEach((item, index) => {
-        if (!item.label) validationErrors.value.push(`Income Label for record #${index + 1} is required`);
-        if (!item.amount) validationErrors.value.push(`Income Amount for record #${index + 1} is required`);
-    });
-    
-    // Check if we have any deduction items with empty fields
-    deductionItems.value.forEach((item, index) => {
-        if (!item.label) validationErrors.value.push(`Deduction Label for record #${index + 1} is required`);
-        if (!item.amount) validationErrors.value.push(`Deduction Amount for record #${index + 1} is required`);
-    });
-    
-    // Make sure we update the form with the latest values
-    updateIncome();
-    updateDeduction();
-    
     return validationErrors.value.length === 0;
 };
 
@@ -323,10 +263,6 @@ const initializeFromDatabase = () => {
                 console.error('Error parsing deduction data:', error);
             }
         }
-        
-        // Update form with parsed values
-        updateIncome();
-        updateDeduction();
     } catch (error) {
         console.error('Error initializing data:', error);
     }
@@ -446,8 +382,9 @@ onMounted(() => {
                                             id="ic_num" 
                                             v-model="form.ic_num" 
                                             type="text" 
+                                            readonly
                                             placeholder="123456789012"
-                                            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                            class="bg-gray-100 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         />
                                         <div v-if="form.errors.ic_num" class="text-red-500 text-sm mt-1">{{ form.errors.ic_num }}</div>
                                         <p v-else class="text-xs text-gray-600 dark:text-gray-400">
@@ -889,154 +826,6 @@ onMounted(() => {
                                     @change="updateAttachment"
                                 />
                                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Upload your salary slip or other supporting documents (PDF only and max size 2MB)</p>
-                            </div>
-
-                        </div>
-
-                        <!-- Modified layout structure - split into two columns with vertical stacking -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-                            <!-- Allowance Records Column -->
-                            <div class="space-y-4">
-                                <h3 class="text-md font-medium text-gray-800 dark:text-white border-b pb-2">Income Records</h3>
-                                
-                                <div v-for="(incomeItem, index) in incomeItems" :key="`income-${index}`" class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-green-50 dark:bg-green-900/20">
-                            <div class="flex justify-between items-center mb-3">
-                                        <h3 class="text-md font-medium text-gray-700 dark:text-gray-300">Income Record #{{ index + 1 }} <span class="text-red-500">*</span></h3>
-                                <button 
-                                            v-if="incomeItems.length > 1" 
-                                    type="button" 
-                                            @click="removeIncomeItem(index)" 
-                                    class="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                                >
-                                    <TrashIcon class="h-4 w-4 mr-1" />
-                                    Remove
-                                </button>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                            <label :for="`income-label-${index}`" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Income Label</label>
-                                    <input 
-                                                :id="`income-label-${index}`" 
-                                                v-model="incomeItem.label" 
-                                        type="text" 
-                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                                @input="updateIncome"
-                                    />
-                                    
-                                </div>
-                                
-                                <div>
-                                            <label :for="`income-amount-${index}`" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Total Income</label>
-
-                                    <div class="mt-1 relative rounded-md shadow-sm">
-
-                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <span class="text-gray-500 dark:text-gray-400 sm:text-s">RM</span>
-                                                </div>
-                                    <input 
-                                        :id="`income-amount-${index}`" 
-                                        v-model="incomeItem.amount" 
-                                        type="number" 
-                                        class="pl-12 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                        @input="updateIncome"
-                                    />
-                                  
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                                <button 
-                                    type="button" 
-                                    @click="addIncomeItem" 
-                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 w-full justify-center"
-                                >
-                                    <PlusIcon class="h-4 w-4 mr-1" />
-                                    Add Income Record
-                                </button>
-                            </div>
-                            
-                            <!-- Deduction Records Column -->
-                            <div class="space-y-4">
-                                <h3 class="text-md font-medium text-gray-800 dark:text-white border-b pb-2">Deduction Records</h3>
-                                
-                                <div v-for="(deductionItem, index) in deductionItems" :key="`deduction-${index}`" class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-red-50 dark:bg-red-900/20">
-                            <div class="flex justify-between items-center mb-3">
-                                <h3 class="text-md font-medium text-gray-700 dark:text-gray-300">Deduction Record #{{ index + 1 }} <span class="text-red-500">*</span></h3>
-                                <button 
-                                    v-if="deductionItems.length > 1" 
-                                    type="button" 
-                                    @click="removeDeductionItem(index)" 
-                                    class="inline-flex items-center px-2 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
-                                >
-                                    <TrashIcon class="h-4 w-4 mr-1" />
-                                    Remove
-                                </button>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                            <label :for="`deduction-label-${index}`" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deduction Label</label>
-                                    <input 
-                                                :id="`deduction-label-${index}`" 
-                                        v-model="deductionItem.label" 
-                                        type="text" 
-                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                        @input="updateDeduction"
-                                    />
-                                </div>
-                                
-                                <div>
-                                            <label :for="`deduction-amount-${index}`" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Total Deduction</label>
-                                    <div class="mt-1 relative rounded-md shadow-sm">
-
-                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <span class="text-gray-500 dark:text-gray-400 sm:text-s">RM</span>
-                                            </div>
-                                    <input 
-                                                :id="`deduction-amount-${index}`" 
-                                        v-model="deductionItem.amount" 
-                                        type="number" 
-                                        class="pl-12 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                        @input="updateDeduction"
-                                    />
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                                <button 
-                                    type="button" 
-                                    @click="addDeductionItem" 
-                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 w-full justify-center"
-                                >
-                                    <PlusIcon class="h-4 w-4 mr-1" />
-                                    Add Deduction Record
-                                </button>
-                            </div>
-                    </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4 mb-6">
-                            <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-green-50 dark:bg-green-900/20">
-                                <h3 class="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">Total Income</h3>
-                                <div class="text-xl font-bold text-green-600 dark:text-green-400">
-                                    RM {{ incomeItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0).toFixed(2) }}
-                                </div>
-                            </div>
-
-                            <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-red-50 dark:bg-red-900/20">
-                                <h3 class="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">Total Deduction</h3>
-                                <div class="text-xl font-bold text-red-600 dark:text-red-400">
-                                    RM {{ deductionItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0).toFixed(2) }}
-                                </div>
-                            </div>
-
-                            <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-                                <h3 class="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">Nett Income</h3>
-                                <div class="text-xl font-bold text-blue-600 dark:text-blue-400">
-                                    RM {{ (incomeItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0) - deductionItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0)).toFixed(2) }}
-                                </div>
                             </div>
                         </div>
                     </div>

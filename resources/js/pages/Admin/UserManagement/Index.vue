@@ -147,6 +147,8 @@ const getStatusBadgeClass = (status: string) => {
             return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100';
         case 'inactive':
             return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100';
+        case 'not verified':
+            return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100';
         default:
             return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100';
     }
@@ -299,6 +301,7 @@ const cancelDelete = () => {
                                 <option value="all">All Status</option>
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
+                                <option value="not verified">Not Verified</option>
                             </select>
                         </div>
                     </div>
@@ -308,49 +311,53 @@ const cancelDelete = () => {
             <!-- Users Table -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
                 <!-- Mobile View (visible on small screens) -->
-                <div class="block md:hidden">
+                <div class="block md:hidden text-xs">
                     <div v-for="user in users.data" :key="user.id" class="p-4 border-b border-gray-200 dark:border-gray-700">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-                                    <img v-if="user.user_photo" :src="`/storage/${user.user_photo}`" class="h-10 w-10 rounded-full object-cover" />
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+                                    <img v-if="user.user_photo" :src="`/storage/${user.user_photo}`" class="h-8 w-8 rounded-full object-cover" />
                                 </div>
-                                <div class="ml-3">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ user.name }}</div>
-                                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ user.username }}</div>
+                                <div class="ml-2">
+                                    <div class="text-xs font-medium text-gray-900 dark:text-white">{{ user.name }}</div>
+                                    <div class="text-[10px] text-gray-500 dark:text-gray-400">{{ user.username }}</div>
                                 </div>
                             </div>
-                            <div class="flex gap-2">
+                            <div class="flex gap-1">
                                 <Link :href="route('users.management.show', { username: user.username })" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
-                                    <EyeIcon class="h-5 w-5" />
+                                    <EyeIcon class="h-4 w-4" />
                                 </Link>
                                 <Link :href="route('users.management.edit', { username: user.username })" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                                    <PencilIcon class="h-5 w-5" />
+                                    <PencilIcon class="h-4 w-4" />
                                 </Link>
-                                <button @click="confirmDelete(user.id, user.name)" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
-                                    <TrashIcon class="h-5 w-5" />
+                                <button
+                                    v-if="userRole === 'superuser' || (userRole === 'admin' && user.role !== 'admin')"
+                                    @click="confirmDelete(user.id, user.name)"
+                                    class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                >
+                                    <TrashIcon class="h-4 w-4" />
                                 </button>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div class="grid grid-cols-2 gap-2 text-xs">
                             <div>
                                 <span class="text-gray-500 dark:text-gray-400">Email:</span>
-                                <div class="text-gray-900 dark:text-white">{{ user.email }}</div>
+                                <div class="text-gray-900 dark:text-white break-all">{{ user.email }}</div>
                             </div>
                             <div>
                                 <span class="text-gray-500 dark:text-gray-400">Phone:</span>
-                                <div class="text-gray-900 dark:text-white">{{ user.phone_num }}</div>
+                                <div class="text-gray-900 dark:text-white break-all">{{ user.phone_num }}</div>
                             </div>
                             <div>
                                 <span class="text-gray-500 dark:text-gray-400">Role:</span>
                                 <div>
                                     <div v-if="user.role === 'sub agent'">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getRoleBadgeClass(user.role)">
+                                        <span class="px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full" :class="getRoleBadgeClass(user.role)">
                                             {{ user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1, 4) + (user.role.length > 4 ? user.role.charAt(4).toUpperCase() + user.role.slice(5) : '') : '' }}
                                         </span>
                                     </div>
                                     <div v-else>
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getRoleBadgeClass(user.role)">
+                                        <span class="px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full" :class="getRoleBadgeClass(user.role)">
                                             {{ user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : '' }}
                                         </span>
                                     </div>
@@ -359,9 +366,16 @@ const cancelDelete = () => {
                             <div>
                                 <span class="text-gray-500 dark:text-gray-400">Status:</span>
                                 <div>
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getStatusBadgeClass(user.status)">
-                                        {{ user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : '' }}
-                                    </span>
+                                    <div v-if="user.status === 'not verified'">
+                                        <span class="px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full" :class="getStatusBadgeClass(user.status)">
+                                            {{ user.role ? user.status.charAt(0).toUpperCase() + user.status.slice(1, 4) + (user.status.length > 4 ? user.status.charAt(4).toUpperCase() + user.status.slice(5) : '') : '' }}
+                                        </span>
+                                    </div>
+                                    <div v-else>
+                                        <span class="px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full" :class="getStatusBadgeClass(user.status)">
+                                            {{ user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : '' }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -432,19 +446,31 @@ const cancelDelete = () => {
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getStatusBadgeClass(user.status)">
-                                        {{ user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : '' }}
-                                    </span>
+                                    <div v-if="user.status === 'not verified'">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getStatusBadgeClass(user.status)">
+                                            {{ user.role ? user.status.charAt(0).toUpperCase() + user.status.slice(1, 4) + (user.status.length > 4 ? user.status.charAt(4).toUpperCase() + user.status.slice(5) : '') : '' }}
+                                        </span>
+                                    </div>
+                                    <div v-else>
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getStatusBadgeClass(user.status)">
+                                            {{ user.status ? user.status.charAt(0).toUpperCase() + user.status.slice(1) : '' }}
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end gap-2">
                                         <Link :href="route('users.management.show', { username: user.username })" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">
                                             <EyeIcon class="h-5 w-5" />
                                         </Link>
-                                        <Link :href="route('users.management.edit', { username: user.username })" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
+                                        <Link v-if="userRole === 'superuser' || (userRole === 'admin' && user.role !== 'admin')"
+                                        :href="route('users.management.edit', { username: user.username })" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
                                             <PencilIcon class="h-5 w-5" />
                                         </Link>
-                                        <button @click="confirmDelete(user.id, user.name)" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                                        <button
+                                            v-if="userRole === 'superuser' || (userRole === 'admin' && user.role !== 'admin')"
+                                            @click="confirmDelete(user.id, user.name)"
+                                            class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                        >
                                             <TrashIcon class="h-5 w-5" />
                                         </button>
                                     </div>

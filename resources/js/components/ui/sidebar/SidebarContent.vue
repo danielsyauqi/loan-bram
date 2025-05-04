@@ -15,3 +15,24 @@ const props = defineProps<{
         <slot />
     </div>
 </template>
+
+<style scoped>
+/* Minimalist scrollbar for sidebar */
+::-webkit-scrollbar {
+  width: 6px;
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+/* Firefox */
+:host {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+}
+</style>
