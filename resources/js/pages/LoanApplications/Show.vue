@@ -696,6 +696,7 @@ const saveApplication = (field = null, value = null) => {
             product_id: form.product_id,
             document_checklist: form.document_checklist,
             for_admin: form.for_admin,
+            agent_id: form.agent_id,
         };
     }
 
@@ -1640,7 +1641,7 @@ const saveApplication = (field = null, value = null) => {
                         <div>
                             <div class="flex justify-between items-center">
                             <label for="agent_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Select Master Agent
+                                Select Agent
                             </label>
     
                             </div>

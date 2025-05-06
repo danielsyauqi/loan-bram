@@ -114,12 +114,14 @@ class DashboardController extends Controller
         $totalLoanDisbursed = LoanApplications::where('status', 'Disbursed')->sum('amount_disbursed') ?? 0;
         
         $monthlyDisbursed = [];
-        for ($i = 1; $i <= 12; $i++) {
+        for ($i = 0; $i <= 11; $i++) {
             $monthlyDisbursed[$i] = LoanApplications::where('status', 'Disbursed')
                 ->whereMonth('created_at', $i)
                 ->whereYear('created_at', now()->year)
                 ->sum('amount_disbursed') ?? 0;
         }
+
+        Log::info($monthlyDisbursed);
 
         $weekLoanDisbursed = LoanApplications::where('status', 'Disbursed')
         ->where('created_at', '>=', now()->subWeek())
@@ -207,12 +209,16 @@ class DashboardController extends Controller
 
         }elseif($userRole==="agent"){
 
-        $totalLoanApplications = LoanApplications::where('agent_id', $userId)->count() ?? 0;
+        $subAgents = User::where('master_agent', $userId)->get();
+        $subAgentIds = $subAgents->pluck('id')->toArray();
+        $totalLoanApplications = LoanApplications::where('agent_id', $userId)->orWhereIn('agent_id', $subAgentIds)->count() ?? 0;
         $weekLoanApplications = LoanApplications::where('agent_id', $userId)
+            ->orWhereIn('agent_id', $subAgentIds)
             ->where('created_at', '>=', now()->subWeek())
             ->count() ?? 0;
         
         $weekLoanActive = LoanApplications::where('agent_id', $userId)
+            ->orWhereIn('agent_id', $subAgentIds)
             ->where('created_at', '>=', now()->subWeek())
             ->where(function($query) {
                 $query->where('status', 'New')
@@ -225,15 +231,18 @@ class DashboardController extends Controller
             ->count() ?? 0;
 
         $totalCustomers = LoanApplications::where('agent_id', $userId)
+            ->orWhereIn('agent_id', $subAgentIds)
             ->distinct('customer_id')
             ->count('customer_id') ?? 0;
 
         $weekTotalCustomers = LoanApplications::where('agent_id', $userId)
+            ->orWhereIn('agent_id', $subAgentIds)
             ->where('created_at', '>=', now()->subWeek())
             ->distinct('customer_id')
             ->count('customer_id') ?? 0;
 
         $totalLoanActive = LoanApplications::where('agent_id', $userId)
+            ->orWhereIn('agent_id', $subAgentIds)
             ->where(function($query) {
                 $query->where('status', 'New')
                     ->orWhere('status', 'Processing')
@@ -245,8 +254,10 @@ class DashboardController extends Controller
             ->count() ?? 0;
 
         $totalLoanPending = LoanApplications::where('agent_id', $userId)
+            ->orWhereIn('agent_id', $subAgentIds)
             ->where(function($query) {
-                $query->where('status', 'Pending')
+                $query->where('status', 'New')
+                    ->orWhere('status', 'Pending')
                     ->orWhere('status', 'Processing')
                     ->orWhere('status', 'Pending@Bank')
                     ->orWhere('status', 'Pending@Agency')
@@ -254,31 +265,40 @@ class DashboardController extends Controller
             })
             ->count() ?? 0;
             
-        $totalLoanRejected = LoanApplications::where('agent_id', $userId)
+        $totalLoanRejected = LoanApplications::where(function($query) use ($userId, $subAgentIds) {
+            $query->where('agent_id', $userId)
+                  ->orWhereIn('agent_id', $subAgentIds);
+        })
             ->where('status', 'Rejected')
-            ->count() ?? 0;
+        ->count() ?? 0;
             
-        $totalLoanApproved = LoanApplications::where('agent_id', $userId)
-            ->where(function($query) {
-                $query->where('status', 'Approved')
-                    ->orWhere('status', 'Disbursed');
-            })
-            ->count() ?? 0;
+        $totalLoanApproved = LoanApplications::where(function($query) use ($userId, $subAgentIds) {
+            $query->where('agent_id', $userId)
+                  ->orWhereIn('agent_id', $subAgentIds);
+        })
+        ->where('status', 'Approved')
+        ->orWhere('status', 'Disbursed')
+        ->count() ?? 0;
             
         $totalLoanDisbursed = LoanApplications::where('agent_id', $userId)
+            ->orWhereIn('agent_id', $subAgentIds)
             ->where('status', 'Disbursed')
             ->sum('amount_disbursed') ?? 0;
         
         $monthlyDisbursed = [];
-        for ($i = 1; $i <= 12; $i++) {
-            $monthlyDisbursed[$i] = LoanApplications::where('agent_id', $userId)
+        for ($i = 0; $i <= 11; $i++) {
+            $monthlyDisbursed[] = LoanApplications::where(function($query) use ($userId, $subAgentIds) {
+                $query->where('agent_id', $userId)
+                    ->orWhereIn('agent_id', $subAgentIds);
+            })
                 ->where('status', 'Disbursed')
                 ->whereMonth('created_at', $i)
                 ->whereYear('created_at', now()->year)
-                ->sum('amount_disbursed') ?? 0;
+            ->sum('amount_disbursed') ?? 0;
         }
 
         $weekLoanDisbursed = LoanApplications::where('agent_id', $userId)
+            ->orWhereIn('agent_id', $subAgentIds)
             ->where('status', 'Disbursed')
             ->where('created_at', '>=', now()->subWeek())
             ->sum('amount_disbursed') ?? 0;
@@ -299,6 +319,7 @@ class DashboardController extends Controller
             }) ?? [];
 
         $recentApplications = LoanApplications::where('agent_id', $userId)
+            ->orWhereIn('agent_id', $subAgentIds)
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get()
@@ -315,6 +336,7 @@ class DashboardController extends Controller
             }) ?? [];
 
         $topModules = LoanApplications::where('agent_id', $userId)
+            ->orWhereIn('agent_id', $subAgentIds)
             ->select('module_id', DB::raw('count(*) as total'))
             ->groupBy('module_id')
             ->orderBy('total', 'desc')
@@ -338,6 +360,7 @@ class DashboardController extends Controller
             }) ?? [];
 
         $compareDisbursedLastYear = LoanApplications::where('agent_id', $userId)
+                ->orWhereIn('agent_id', $subAgentIds)
             ->where('status', 'Disbursed')
             ->whereYear('created_at', now()->subYear()->year)
             ->sum('amount_disbursed') ?? 0;
@@ -370,6 +393,175 @@ class DashboardController extends Controller
             'weekTotalCustomers' => $weekTotalCustomers ?? 0,
             'compareDisbursedLastYearPercentage' => $compareDisbursedLastYearPercentage ?? 0,
             'weekLoanActive' => $weekLoanActive ?? 0,
+        ]);
+
+        }
+        elseif($userRole==="sub agent"){
+            $totalLoanApplications = LoanApplications::where('agent_id', $userId)->count() ?? 0;
+            $weekLoanApplications = LoanApplications::where('agent_id', $userId)
+                ->where('created_at', '>=', now()->subWeek())
+                ->count() ?? 0;
+            
+            $weekLoanActive = LoanApplications::where('agent_id', $userId)
+                ->where('created_at', '>=', now()->subWeek())
+                ->where(function($query) {
+                    $query->where('status', 'New')
+                        ->orWhere('status', 'Processing')
+                        ->orWhere('status', 'Pending')
+                        ->orWhere('status', 'Pending@Bank')
+                        ->orWhere('status', 'Pending@Agency')
+                        ->orWhere('status', 'Ready to Submit');
+                })
+                ->count() ?? 0;
+    
+            $totalCustomers = LoanApplications::where('agent_id', $userId)
+                ->distinct('customer_id')
+                ->count('customer_id') ?? 0;
+    
+            $weekTotalCustomers = LoanApplications::where('agent_id', $userId)
+                ->where('created_at', '>=', now()->subWeek())
+                ->distinct('customer_id')
+                ->count('customer_id') ?? 0;
+    
+            $totalLoanActive = LoanApplications::where('agent_id', $userId)
+                ->where(function($query) {
+                    $query->where('status', 'New')
+                        ->orWhere('status', 'Processing')
+                        ->orWhere('status', 'Pending')
+                        ->orWhere('status', 'Pending@Bank')
+                        ->orWhere('status', 'Pending@Agency')
+                        ->orWhere('status', 'Ready to Submit');
+                })
+                ->count() ?? 0;
+    
+            $totalLoanPending = LoanApplications::where('agent_id', $userId)
+                ->where(function($query) {
+                    $query->where('status', 'Pending')
+                        ->orWhere('status', 'Processing')
+                        ->orWhere('status', 'Pending@Bank')
+                        ->orWhere('status', 'Pending@Agency')
+                        ->orWhere('status', 'Ready to Submit');
+                })
+                ->count() ?? 0;
+                
+            $totalLoanRejected = LoanApplications::where('agent_id', $userId)
+                ->where('status', 'Rejected')
+                ->count() ?? 0;
+                
+            $totalLoanApproved = LoanApplications::where('agent_id', $userId)
+                ->where(function($query) {
+                    $query->where('status', 'Approved')
+                        ->orWhere('status', 'Disbursed');
+                })
+                ->count() ?? 0;
+                
+            $totalLoanDisbursed = LoanApplications::where('agent_id', $userId)
+                ->where('status', 'Disbursed')
+                ->sum('amount_disbursed') ?? 0;
+            
+            $monthlyDisbursed = [];
+            for ($i = 0; $i <= 11; $i++) {
+                $monthlyDisbursed[$i] = LoanApplications::where(function($query) use ($userId) {
+                        $query->where('agent_id', $userId);
+                    })
+                    ->where('status', 'Disbursed')
+                    ->whereMonth('created_at', $i)
+                    ->whereYear('created_at', now()->year)
+                    ->sum('amount_disbursed') ?? 0;
+            }
+    
+            $weekLoanDisbursed = LoanApplications::where('agent_id', $userId)
+                ->where('status', 'Disbursed')
+                ->where('created_at', '>=', now()->subWeek())
+                ->sum('amount_disbursed') ?? 0;
+    
+            $recentNotification = Notification::orderBy('created_at', 'desc')
+                ->where('status', 'unread')
+                ->where('receiver_id', Auth::user()->id)
+                ->take(5)
+                ->get()
+                ->map(function ($notification) {
+                    return [
+                        'id' => $notification->id ?? 0,
+                        'title' => $notification->sender ? "Alert from {$notification->sender->name}" : 'Alert',
+                        'description' => $notification->message ?? '',
+                        'created_at' => $notification->created_at ?? '',
+                        'role' => $notification->receiver->role ?? '',
+                    ];
+                }) ?? [];
+    
+            $recentApplications = LoanApplications::where('agent_id', $userId)
+                ->orderBy('created_at', 'desc')
+                ->take(5)
+                ->get()
+                ->map(function ($application) {
+                    return [
+                        'id' => $application->id ?? 0,
+                        'customer' => $application->customer->name ?? '',
+                        'module' => $application->module->name ?? '',
+                        'product' => $application->product->name ?? '',
+                        'amount' => $application->amount_applied ?? 0,
+                        'status' => $application->status ?? '',
+                        'date' => $application->created_at ?? '',
+                    ];
+                }) ?? [];
+    
+            $topModules = LoanApplications::where('agent_id', $userId)
+                ->select('module_id', DB::raw('count(*) as total'))
+                ->groupBy('module_id')
+                ->orderBy('total', 'desc')
+                ->take(5)
+                ->get()
+                ->map(function ($module) {
+                    $loanModule = LoanModules::find($module->module_id);
+                    return [
+                        'id' => $module->module_id ?? 0,
+                        'name' => $loanModule->name ?? 'No Module',
+                        'total' => $module->total ?? 0,
+                        'recentApplications' => LoanApplications::where('module_id', $module->module_id)
+                            ->where('created_at', '>=', now()->subWeek())
+                            ->count() ?? 0,
+                        'image' => $loanModule->logo ?? '',
+                        'growth' => LoanApplications::where('module_id', $module->module_id)
+                            ->where('created_at', '<=', now()->subWeek())
+                            ->count() ?? 0,
+                        'applications' => LoanApplications::where('module_id', $module->module_id)->count() ?? 0,
+                    ];
+                }) ?? [];
+    
+            $compareDisbursedLastYear = LoanApplications::where('agent_id', $userId)
+                ->where('status', 'Disbursed')
+                ->whereYear('created_at', now()->subYear()->year)
+                ->sum('amount_disbursed') ?? 0;
+    
+    
+            if($compareDisbursedLastYear === 0) {
+                $compareDisbursedLastYearPercentage = 0; // Avoid division by zero
+            }else{
+                $compareDisbursedLastYearPercentage = ($totalLoanDisbursed - $compareDisbursedLastYear) / $compareDisbursedLastYear * 100;
+    
+            }
+    
+    
+    
+    
+            return Inertia::render('Dashboard', [
+                'monthlyDisbursed' => $monthlyDisbursed ?? [],
+                'topModules' => $topModules ?? [],
+                'recentApplications' => $recentApplications ?? [],
+                'recentNotification' => $recentNotification ?? [],
+                'totalLoanApplications' => $totalLoanApplications ?? 0,
+                'weekLoanApplications' => $weekLoanApplications ?? 0,
+                'totalLoanActive' => $totalLoanActive ?? 0,
+                'totalLoanPending' => $totalLoanPending ?? 0,
+                'totalLoanRejected' => $totalLoanRejected ?? 0,
+                'totalLoanApproved' => $totalLoanApproved ?? 0,
+                'totalLoanDisbursed' => $totalLoanDisbursed ?? 0,
+                'weekLoanDisbursed' => $weekLoanDisbursed ?? 0,
+                'totalCustomers' => $totalCustomers ?? 0,
+                'weekTotalCustomers' => $weekTotalCustomers ?? 0,
+                'compareDisbursedLastYearPercentage' => $compareDisbursedLastYearPercentage ?? 0,
+                'weekLoanActive' => $weekLoanActive ?? 0,
         ]);
 
         }

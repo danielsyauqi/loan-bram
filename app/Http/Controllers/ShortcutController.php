@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Inertia\Inertia;
 use App\Models\LoanModules;
 use Illuminate\Support\Str;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use App\Models\LoanApplications;
 use Illuminate\Support\Facades\Log;
@@ -59,15 +61,20 @@ class ShortcutController extends Controller
         ]);
     }
 
-    public function assignSubAgent($referenceId, $subAgentId){
-        Log::info('Assigning sub-agent', [
-            'reference_id' => $referenceId,
-            'sub_agent_id' => $subAgentId,
-        ]);        
+    public function assignAgent($referenceId, $agentId){
+     
         try {
             // Update the loan application with the sub-agent ID
-            $info = LoanApplications::where('reference_id', $referenceId)->update(['sub_agent_id' => $subAgentId]);
-            Log::info($info);
+            LoanApplications::where('reference_id', $referenceId)->update(['agent_id' => $agentId]);
+
+            //Send Notification to the agent
+            $notification = new Notification();
+            $notification->sender_id = Auth::user()->id;
+            $notification->receiver_id = $agentId;
+            $notification->message = 'You have been assigned a new loan application with reference number ' . $referenceId;
+            $notification->status = 'unread';
+            $notification->reference_id = $referenceId;
+            $notification->save();
             
             return response()->json([
                 'success' => true,
@@ -77,7 +84,7 @@ class ShortcutController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to assign sub-agent', [
                 'reference_id' => $referenceId,
-                'sub_agent_id' => $subAgentId,
+                'agent_id' => $agentId,
                 'error_message' => $e->getMessage(),
                 'error_code' => $e->getCode(),
                 'error_file' => $e->getFile(),

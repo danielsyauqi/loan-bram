@@ -2,17 +2,20 @@
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-
+import { computed } from 'vue';
 defineProps<{
     items: NavItem[];
 }>();
 
 const page = usePage<SharedData>();
+const userRole = computed(() => page.props.auth.user.role);
 </script>
 
 <template>
     <SidebarGroup class="px-2 py-0">
-        <SidebarGroupLabel>Admin Management</SidebarGroupLabel>
+        <SidebarGroupLabel>
+            {{ userRole === 'admin' ? 'Admin Management' : userRole === 'agent' ? 'Agent Management' : 'Management' }}
+        </SidebarGroupLabel>
         <SidebarMenu>
             <SidebarMenuItem v-for="item in items" :key="item.title">
                 <SidebarMenuButton as-child :is-active="item.href === page.url">

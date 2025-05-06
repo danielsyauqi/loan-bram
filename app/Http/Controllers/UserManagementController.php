@@ -94,7 +94,7 @@ class UserManagementController extends Controller
             'phone_num' => 'required|string|max:20',
             'bank_name' => 'nullable|string|max:255',
             'bank_account' => 'nullable|string|max:255',
-            'role' => 'required|string|in:admin,agent,customer,sub_agent',
+            'role' => 'required|string|in:admin,agent,customer,sub agent',
             'status' => 'required|string|in:active,inactive',
             'ic_num' => 'required|string|max:20',
             'address_line_1' => 'required|string|max:255',
@@ -309,8 +309,8 @@ class UserManagementController extends Controller
             
             // Then delete the loan applications
             LoanApplications::where('customer_id', $user->id)->delete();
-        }elseif($user->role === 'sub_agent') {
-            LoanApplications::where('sub_agent_id', $user->id)->update(['sub_agent_id' => null]);
+        }elseif($user->role === 'sub agent') {
+            LoanApplications::where('agent_id', $user->id)->update(['agent_id' => null]);
         }
         
         // Delete user photo if exists

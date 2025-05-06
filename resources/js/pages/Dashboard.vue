@@ -29,10 +29,20 @@ const userRole = computed(() => (user.value as any)?.role || 'user');
 
 // Breadcrumbs for the page
 const breadcrumbs: BreadcrumbItem[] = [
-  {
-    title: 'Admin Dashboard',
-    href: '/admin/dashboard',
-  },
+  userRole.value === 'admin'
+    ? {
+        title: 'Admin Dashboard',
+        href: '/admin/dashboard',
+      }
+    : (userRole.value === 'agent' || userRole.value === 'sub agent')
+    ? {
+        title: 'Agent Dashboard',
+        href: '/agent/dashboard',
+      }
+    : {
+        title: 'Dashboard',
+        href: '/dashboard',
+      }
 ];
 
 const props = defineProps({
@@ -117,9 +127,11 @@ function formatNumberTwoDecimal(value: string | number): string {
   });
 }
 
+console.log(props.monthlyDisbursed);
 // Defensive: If monthlyDisbursed is empty, fill with 12 zeros for chart
-const disbursedData = props.monthlyDisbursed.length === 12 ? props.monthlyDisbursed : Array(12).fill(0);
-
+const disbursedData = Array.isArray(props.monthlyDisbursed) && props.monthlyDisbursed.length === 12
+  ? props.monthlyDisbursed
+  : Array(12).fill(0);
 // Chart data
 const monthlyDisbursed = ref({
   months: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -360,7 +372,7 @@ const stats = ref([
 </script>
 
 <template>
-  <Head title="Admin Dashboard" />
+  <Head :title="userRole === 'admin' ? 'Admin Dashboard' : userRole === 'agent' ? 'Agent Dashboard' : userRole === 'sub agent' ? 'Sub Agent Dashboard' : 'Dashboard'" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
     <div v-if="userRole === 'admin' || userRole === 'agent' || userRole === 'sub agent'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900 animate__animated animate__fadeIn">
@@ -562,7 +574,7 @@ const stats = ref([
         <div class="lg:col-span-2 p-6 bg-white rounded-xl shadow-lg dark:bg-gray-800 animate__animated animate__fadeIn">
           <div class="flex justify-between items-center mb-4">
         <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Recent Applications</h3>
-        <Link href="/loan-applications" class="text-blue-600 hover:text-blue-800 text-sm">View All</Link>
+        <Link href="/loan-applications/list" class="text-blue-600 hover:text-blue-800 text-sm">View All</Link>
           </div>
           
           <div class="overflow-x-auto">

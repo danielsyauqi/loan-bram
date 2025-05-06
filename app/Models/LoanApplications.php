@@ -16,7 +16,6 @@ class LoanApplications extends Model
         'product_id',
         'agent_id',
         'module_id',
-        'sub_agent_id',
         'biro',
         'banca',
         'rates',
@@ -57,12 +56,7 @@ class LoanApplications extends Model
     public function agent()
     {
         return $this->belongsTo(User::class, 'agent_id');
-    }
-
-    public function subAgent()
-    {
-        return $this->belongsTo(User::class, 'sub_agent_id');
-    }
+    }   
 
 
     public function product()

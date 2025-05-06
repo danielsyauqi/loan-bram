@@ -139,7 +139,7 @@ class LoanApplicationController extends Controller
             
         }else if(Auth::user()->role === 'sub agent'){
             Log::info('Sub Agent');
-            $applications = LoanApplications::where('sub_agent_id', Auth::user()->id)
+            $applications = LoanApplications::where('agent_id', Auth::user()->id)
             ->get()
             ->map(function ($application) {
                 return [
@@ -313,6 +313,7 @@ class LoanApplicationController extends Controller
         
         // Fetch all users with role 'Agent' to populate the agent selection dropdown
         $agents = User::where('role', 'agent')
+            ->orWhere('role', 'sub agent')
             ->select('id', 'name', 'email', 'phone_num', 'role')
             ->get();
 
@@ -388,7 +389,7 @@ class LoanApplicationController extends Controller
                 $notification->sender_id = Auth::user()->id;
                 $notification->receiver_id = $request->agent_id;
                 $notification->status = 'unread';
-                $notification->message = 'You have been assigned as Master Agent for loan application #' . $reference_id;
+                $notification->message = 'You have been assigned as Agent for loan application #' . $reference_id;
                 $notification->save();
             }
             
@@ -508,6 +509,7 @@ class LoanApplicationController extends Controller
         $workflow_remarks = WorkflowRemarks::where('application_id', $application->id)->get();
         // Fetch all users with role 'Agent' to populate the agent selection dropdown
         $agents = User::where('role', 'agent')
+            ->orWhere('role', 'sub agent')
             ->select('id', 'name', 'email', 'phone_num', 'role')
             ->get();
 
@@ -685,7 +687,7 @@ class LoanApplicationController extends Controller
             $fieldsToUpdate = $request->only([
                 'rates', 'biro', 'banca', 'tenure_applied', 'date_received',
                 'amount_applied', 'amount_approved', 'amount_disbursed',
-                'tenure_approved', 'date_approved', 'date_disbursed', 'date_rejected', 'product_id', 'for_admin'
+                'tenure_approved', 'date_approved', 'date_disbursed', 'date_rejected', 'product_id'
             ]);
             
             // If fields array is provided, process multiple fields at once
@@ -694,7 +696,7 @@ class LoanApplicationController extends Controller
                     if (in_array($field, [
                         'rates', 'biro', 'banca', 'tenure_applied', 'date_received',
                         'amount_applied', 'amount_approved', 'amount_disbursed',
-                        'tenure_approved', 'date_approved', 'date_disbursed', 'date_rejected', 'product_id', 'for_admin'
+                        'tenure_approved', 'date_approved', 'date_disbursed', 'date_rejected', 'product_id'
                     ])) {
                         $fieldsToUpdate[$field] = $value;
                     }
@@ -712,22 +714,19 @@ class LoanApplicationController extends Controller
             // Handle agent assignment with notification
             if ($request->has('agent_id') && $request->agent_id !== $application->agent_id) {
                 $application->agent_id = $request->agent_id;
+
+                $notification = new Notification();
+                $notification->sender_id = Auth::user()->id;
+                $notification->receiver_id = $request->agent_id;
+                $notification->status = 'unread';
+                $notification->reference_id = $application->reference_id;
+                $notification->message = 'You have been assigned as Agent for loan application #' . $application->reference_id;
+                $notification->save();
                 
-                // Create notification for the newly assigned agent
-                if ($request->agent_id) {
-                    Notification::create([
-                        'sender_id' => Auth::user()->id,
-                        'receiver_id' => $request->agent_id,
-                        'status' => 'unread',
-                        'reference_id' => $application->reference_id,
-                        'message' => 'You have been assigned as Master Agent for loan application #' . $application->reference_id
-                    ]);
-                }
             }
 
-            if ($request->has('for_admin')) {
+            if ($request->has('for_admin') && $request->for_admin !== $application->admin_id) {
                 $application->admin_id = $request->for_admin;
-                $application->save();
                 
                 $notification = new Notification();
                 $notification->sender_id = Auth::user()->id;
@@ -1007,11 +1006,14 @@ class LoanApplicationController extends Controller
                 });
             }else if(Auth::user()->role === 'agent'){
                 Log::info('Agent');
-                $applications = LoanApplications::where('agent_id', Auth::user()->id)
-                ->get()
+                $subAgents = User::where('master_agent', Auth::user()->id)->get();
+                $subAgentsApplications = LoanApplications::whereIn('agent_id', $subAgents->pluck('id'))->get();
+                $agentApplications = LoanApplications::where('agent_id', Auth::user()->id)->get();
+                $applications = $agentApplications->merge($subAgentsApplications)
                 ->map(function ($application) {
                     return [
                         'id' => $application->id ?? 0,
+                        'agent_name' => $application->agent->name ?? '',
                         'customer_id' => $application->customer_id ?? 0,
                         'product_id' => $application->product_id ?? 0,
                         'agent_id' => $application->agent_id ?? 0,
@@ -1042,7 +1044,7 @@ class LoanApplicationController extends Controller
                 
             }else if(Auth::user()->role === 'sub agent'){
                 Log::info('Sub Agent');
-                $applications = LoanApplications::where('sub_agent_id', Auth::user()->id)
+                $applications = LoanApplications::where('agent_id', Auth::user()->id)
                 ->get()
                 ->map(function ($application) {
                     return [
@@ -1079,6 +1081,8 @@ class LoanApplicationController extends Controller
 
         return Inertia::render('LoanApplications/List', [
             'applications' => $applications,
+            'subAgentsApplications' => $subAgentsApplications ?? [],
+            'agentApplications' => $agentApplications ?? [],
             'isAdmin' => $isAdmin,
             'permissions' => $permissions,
             'flash' => $flash

@@ -36,6 +36,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'pending_email',
         'pending_email_token',
         'pending_email_sent_at',
+        'master_agent'
     ];
 
     /**

@@ -4,7 +4,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Bell, Folder, LayoutGrid, Library, List, ClipboardList, Settings, UserIcon, Plus, LayoutDashboard, Star } from 'lucide-vue-next';
+import { BookOpen, Bell, Folder, LayoutGrid, Library, List, ClipboardList, Settings, UserIcon, Plus, LayoutDashboard, Star, Users } from 'lucide-vue-next';
 import { onMounted, onUnmounted, ref, computed } from 'vue';
 import { useNotificationStore } from '../stores/notificationStore';
 import AppLogo from './AppLogo.vue';   
@@ -158,6 +158,15 @@ const loanManagementNavItemsForAgent: NavItem[] = [
     },
 ];
 
+const subAgentManagementNavItems: NavItem[] = [
+    {
+        title: 'Sub Agent List',
+        href: '/sub-agents',
+        icon: Users,
+        isActive: url.startsWith('/sub-agents'),
+    },
+];
+
 // Management section navigation items
 const managementNavItems: NavItem[] = [
 
@@ -246,6 +255,10 @@ const footerNavItems: NavItem[] = [
             <!-- Management Section -->
             <div v-if="user?.role === 'admin'" class="px-2 py-2">
                 <NavManagement :items="managementNavItems" />
+            </div>
+
+            <div v-if="user?.role === 'agent'" class="px-2 py-2">
+                <NavManagement :items="subAgentManagementNavItems" />
             </div>
         </SidebarContent>
 

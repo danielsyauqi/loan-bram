@@ -15,6 +15,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ShortcutController;
 use App\Http\Controllers\Auth\EmailPreVerificationController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\SubAgentController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -210,7 +211,7 @@ Route::middleware(['auth'])->prefix('api')->group(function () {
 Route::get('/choose-module/{referenceId}', [App\Http\Controllers\ShortcutController::class, 'chooseModule'])->name('choose-module');
 Route::get('/choose-module/{referenceId}/{moduleId}', [App\Http\Controllers\ShortcutController::class, 'selectModule'])->name('choose-module.select');
 
-Route::post('/assign-sub-agent/{referenceId}/{subagentId}', [App\Http\Controllers\ShortcutController::class, 'assignSubAgent'])->middleware(['auth', 'verified'])->name('assign-sub-agent');
+Route::post('/assign-agent/{referenceId}/{agentId}', [App\Http\Controllers\ShortcutController::class, 'assignAgent'])->middleware(['auth', 'verified'])->name('assign-agent');
 
 // Admin Dashboard route
 Route::get('/dashboard', [DashboardController::class, 'dashboard'])->middleware(['auth', 'verified'])->name('dashboard');
@@ -245,5 +246,10 @@ Route::get('/registration-success', [RegisteredUserController::class, 'registrat
 Route::post('/register/email-preverify/verify', [EmailPreVerificationController::class, 'verifyByCode'])->name('email.preverify.verify');
 
 Route::get('/invalid-verification-link', [EmailPreVerificationController::class, 'invalidVerificationLink'])->name('email.preverify.invalid');
+
+Route::get('/sub-agents', [SubAgentController::class, 'index'])->name('sub-agents.index');
+Route::post('/sub-agents/add', [SubAgentController::class, 'add'])->name('sub-agents.add');
+Route::post('/sub-agents/remove', [SubAgentController::class, 'remove'])->name('sub-agents.remove');
+Route::get('/sub-agents/{username}', [SubAgentController::class, 'show'])->name('sub-agents.show');
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

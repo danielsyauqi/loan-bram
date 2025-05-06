@@ -97,17 +97,18 @@ class CustomerController extends Controller
                     ],
                     'product' => [],
                     'agents' => [],
-                    'sub_agent' => [],
                     'workflow_remarks' => [],
                     'customer' => [],
                     'address' => [],
                     'employment' => [],
                     'salary' => [],
                     'redemption' => [],
-                    'currentSubAgent' => [],
                     'companyAddress' => []
                 ]);
             }
+
+            $currentUser = Auth::user();
+            Log::info($currentUser);
             
             $customer = User::where('id', $application->customer_id)->first();
             $address = Addresses::where('user_id', $application->customer_id)->first();
@@ -117,10 +118,11 @@ class CustomerController extends Controller
             $redemption = Redemptions::where('customer_id', $application->customer_id)->first();
             $module = LoanModules::where('id', $application->module_id)->first();
             $product = Products::where('id', $application->product_id)->first();
-            $agent = User::where('id', $application->agent_id)->first();
-            $sub_agent = User::where('role' , 'sub agent')->get();
-            $currentSubAgent = User::where('id', $application->sub_agent_id)->first();
+            $agents = User::where('role', 'agent')->orWhere('role', 'sub agent')->get();
             $workflow_remarks = WorkflowRemarks::where('application_id', $application->id)->get();
+            $currentAgent = User::where('id', $application->agent_id)->first();
+
+            Log::info($agents);
 
             // Attach user name and role to each workflow remark
             $workflow_remarks = $workflow_remarks->map(function ($remark) {
@@ -142,13 +144,12 @@ class CustomerController extends Controller
                     'tenure' => $this->calculateTenure($module) ?? 'N/A',
                 ],
                 'product' => $product ?? [],
-                'agents' => $agent ?? [],
-                'sub_agent' => $sub_agent ?? [],
+                'agents' => $agents ?? [],
+                'currentAgent' => $currentAgent ?? [],
                 'workflow_remarks' => $workflow_remarks ?? [],
                 'customer' => $customer ?? [],
                 'address' => $address ?? [],
                 'employment' => $employment ?? [],
-                'currentSubAgent' => $currentSubAgent ?? [],
                 'salary' => $salary ?? [],
                 'redemption' => $redemption ?? [],
                 'companyAddress' => $companyAddress ?? []
@@ -173,8 +174,7 @@ class CustomerController extends Controller
                 'error' => 'Unable to load application details. Please try again later.',
                 'product' => [],
                 'agents' => [],
-                'sub_agent' => [],
-                'currentSubAgent' => [],
+                'currentAgent' => [],
                 'workflow_remarks' => [],
                 'customer' => [],
                 'address' => [],
@@ -491,9 +491,7 @@ class CustomerController extends Controller
             $module = LoanModules::where('id', $application->module_id)->first();
             $product = Products::where('id', $application->product_id)->first();
             $agent = User::where('id', $application->agent_id)->first();
-            $sub_agent = User::where('id', $application->sub_agent_id)->first();
             $workflow_remarks = WorkflowRemarks::where('application_id', $application->id)->get();
-            $sub_agents = User::where('role', 'Sub Agent')->get();
 
             // Attach user name and role to each workflow remark
             $workflow_remarks = $workflow_remarks->map(function ($remark) {
@@ -517,13 +515,11 @@ class CustomerController extends Controller
                 ],
                 'product' => $product ?? [],
                 'agents' => $agent ?? [],
-                'sub_agents' => $sub_agents ?? [],
                 'workflow_remarks' => $workflow_remarks ?? [],
                 'customer' => $user,
                 'address' => $address ?? [],
                 'employment' => $employment ?? [],
                 'salary' => $salary ?? [],
-                'sub_agent' => $sub_agent ?? [],
                 'redemption' => $redemption ?? [],
                 'companyAddress' => $companyAddress ?? []
             ]);

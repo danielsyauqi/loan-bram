@@ -53,14 +53,13 @@ const props = withDefaults(defineProps<{
     };
     product?: any;
     agents?: any;
+    currentAgent?: any;
     customer?: any;
     address?: any;
     employment?: any;
     salary?: any;
-    sub_agent?: any;
     redemption?: any;
     workflow_remarks?: any;
-    currentSubAgent?: any;
     companyAddress?: any;
 }>(), {
     moduleId: 0,
@@ -175,34 +174,34 @@ const documentGroups = {
 };
 
 // Assign sub-agent
-console.log(props.sub_agent);
-const selectedSubAgent = ref('');
-const subAgentsList = ref(props.sub_agent);
+const selectedAgent = ref('');
+const agentsList = ref(props.agents);
+console.log(agentsList.value);
 
-const assignSubAgent = () => {
-  if (!selectedSubAgent.value) {
-    console.error('No sub-agent selected');
-    toastMessage.value = 'Please select a sub-agent before assigning';
+const assignAgent = () => {
+  if (!selectedAgent.value) {
+    console.error('No agent selected');
+    toastMessage.value = 'Please select a agent before assigning';
     showToast.value = true;
     return;
   }
   
-  axios.post(route('assign-sub-agent', {
+  axios.post(route('assign-agent', {
     referenceId: props.application.reference_id,
-    subagentId: selectedSubAgent.value
+    agentId: selectedAgent.value
   }))
   .then(response => {
     if (response.data.success) {
       // Handle success
-      console.log('Sub-agent assigned successfully');
-      toastMessage.value = 'Sub-agent assigned successfully';
+      console.log('Agent assigned successfully');
+      toastMessage.value = 'Agent assigned successfully';
       showToast.value = true;
       router.reload();
     } else {
       // Handle error
       const errorMsg = response.data.message || 'Unknown error occurred';
-      console.error('Error assigning sub-agent:', errorMsg);
-      toastMessage.value = `Failed to assign sub-agent: ${errorMsg}`;
+      console.error('Error assigning agent:', errorMsg);
+      toastMessage.value = `Failed to assign agent: ${errorMsg}`;
       showToast.value = true;
     }
   })
@@ -216,11 +215,11 @@ const assignSubAgent = () => {
       method: error.config?.method,
       data: error.config?.data,
       referenceId: props.application.reference_id,
-      subAgentId: selectedSubAgent.value
+      agentId: selectedAgent.value
     };
     
-    console.error('Error assigning sub-agent:', errorDetails);
-    toastMessage.value = `Failed to assign sub-agent: ${errorDetails.message}`;
+    console.error('Error assigning agent:', errorDetails);
+    toastMessage.value = `Failed to assign agent: ${errorDetails.message}`;
     showToast.value = true;
   });
 };
@@ -680,40 +679,39 @@ onMounted(() => {
                                 <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Assigned Agent</h3>
                             </div>
                             <div class="flex items-center">
-                                <div class="flex items-center mr-10">
+                                <!-- Show agent info if exists -->
+                                <div v-if="currentAgent" class="flex items-center mr-10">
                                     <div class="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500">
-                                        {{ agents?.name?.charAt(0) || 'A' }} 
+                                        {{ currentAgent?.name?.charAt(0) || 'A' }} 
                                     </div>
                                     <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ agents?.name || 'Not assigned' }} (Master Agent)</div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ agents?.email }}</div>
+                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ currentAgent?.name || 'Not assigned' }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ currentAgent?.email }}</div>
                                     </div>
                                 </div>
-                                
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-500">
-                                        {{ agents?.name?.charAt(0) || 'A' }}
-                                    </div>
-                                    <div class="ml-4">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ currentSubAgent?.name || 'Not assigned' }} (Sub Agent)</div>
-                                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ currentSubAgent?.email }}</div>
-
-                                        <div v-if="!application.agent_id || !application.sub_agent_id && userRole === 'agent'" class="mt-2">
+                                <!-- Show selection for master agent if userRole is not customer or sub agent -->
+                                <div v-if="userRole !== 'customer' && userRole !== 'sub agent'" class="flex items-center">
+                                    <div class="ml-4 w-full">
+                                        <div class="mt-2">
                                             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                                                 <select 
-                                                    v-model="selectedSubAgent" 
+                                                    v-model="selectedAgent" 
                                                     class="px-4 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white text-sm"
                                                 >
-                                                    <option value="" disabled selected>Select a sub-agent</option>
-                                                    <option v-for="agent in subAgentsList" :key="agent.id " :value="agent.id">
+                                                    <option value="" disabled selected>Select an agent</option>
+                                                    <option 
+                                                        v-for="agent in agentsList" 
+                                                        :key="agent.id" 
+                                                        :value="agent.id"
+                                                    >
                                                         {{ agent.name }}
                                                     </option>
                                                 </select>
                                                 <button 
                                                     type="button" 
-                                                    @click="assignSubAgent" 
+                                                    @click="assignAgent" 
                                                     class="mt-2 sm:mt-0 sm:ml-2 px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full sm:w-auto"
-                                                    :disabled="!selectedSubAgent"
+                                                    :disabled="!selectedAgent"
                                                 >
                                                     Assign
                                                 </button>
@@ -722,7 +720,6 @@ onMounted(() => {
                                     </div>
                                 </div>
                             </div>
-                            
                         </div>
                     </div>
 

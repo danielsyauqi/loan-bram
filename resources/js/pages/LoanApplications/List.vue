@@ -30,6 +30,7 @@ const props = defineProps<{
     id: number;
     customer_id: number;
     product_id: number;
+    agent_name: string;
     agent_id: number;
     biro: string;
     banca: string;
@@ -53,6 +54,8 @@ const props = defineProps<{
     module_id: number;
     moduleSlug: string;
   }>;
+  subAgentsApplications: Array<any>;
+  agentApplications: Array<any>;
   isAdmin: boolean;
   permissions: {
     create: boolean;
@@ -128,8 +131,21 @@ watch([searchQuery, statusFilter, sortBy], () => {
   currentPage.value = 1;
 });
 
+const agentFilter = ref('all'); // 'all', 'subAgents', 'own'
+const agentFilterOptions = [
+  { value: 'all', label: 'All' },
+  { value: 'subAgents', label: 'Sub Agents Only' },
+  { value: 'own', label: 'Own Applications' }
+];
+
 const filteredApplications = computed(() => {
-  let filtered = [...props.applications];
+  let baseList = props.applications;
+  if (agentFilter.value === 'subAgents') {
+    baseList = props.subAgentsApplications;
+  } else if (agentFilter.value === 'own') {
+    baseList = props.agentApplications;
+  }
+  let filtered = [...baseList];
   
   // Apply search filter
   if (searchQuery.value) {
@@ -399,6 +415,22 @@ onMounted(() => {
             </div>
 
             <div>
+              <label for="agentFilter" class="sr-only">Filter by Agent</label>
+              <div class="relative">
+                <select
+                  id="agentFilter"
+                  v-model="agentFilter"
+                  class="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md bg-white dark:bg-gray-700 dark:text-white"
+                >
+                  <option v-for="option in agentFilterOptions" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none"></div>
+              </div>
+            </div>
+
+            <div>
               <label for="sortBy" class="sr-only">Sort By</label>
               <select
                 id="sortBy"
@@ -456,6 +488,11 @@ onMounted(() => {
                 <tr v-for="application in paginatedApplications" :key="application.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                     {{ application.reference_id }}
+                    <div v-if="application.agent_id && userRole === 'agent'" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Agent: 
+                      <span v-if="application.agent_name">{{ application.agent_name }}</span>
+                      <span v-else>Unknown</span>
+                    </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                     {{ application.customer_name }}

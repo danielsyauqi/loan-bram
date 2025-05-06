@@ -352,7 +352,7 @@ const submitForm = () => {
 //Cancel Form
 const cancelForm = () => {
     // Redirect to the index page
-    window.location.href = route('loan-modules.applications.index', {
+    window.location.href = route('loan-modules.applications', {
         moduleSlug: props.module.slug,
     });
 };
@@ -1093,7 +1093,7 @@ function formatICNumberInput(event: Event) {
                                     Add any special instructions or notes about this loan application.
                                 </p>
                             </div>
-                            <div class="flex justify-end space-x-4">
+                            <div class="flex justify-end space-x-4 mt-3">
                                 <button 
                                     type="button" 
                                     class="inline-flex items-center justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
@@ -1268,7 +1268,7 @@ function formatICNumberInput(event: Event) {
                     <div class="space-y-4">
                         <div>
                             <label for="agent_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Select Master Agent
+                                Select Agent
                             </label>
                             <div class="mt-1">
                                 <select 
