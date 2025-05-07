@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Validation\Rule;
 
 class RegisteredUserController extends Controller
 {
@@ -31,43 +32,58 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request) : RedirectResponse
     {
-        // CSRF 419 error is usually due to missing or invalid CSRF token.
-        // Let's ensure the request is POST and has a valid session.
-        // If this is an API request (e.g., from Vue with fetch/axios), make sure to send the XSRF-TOKEN cookie and X-XSRF-TOKEN header.
+        // Trim username and email before validation
+        $request->merge([
+            'username' => trim($request->username),
+            'email' => trim(strtolower($request->email)),
+        ]);
 
-        // Log the request for debugging
-        Log::info('Store request received', ['request' => $request->all()]);
+        // Debug log for username check
+        Log::info('Checking username', [
+            'input' => $request->username,
+            'exists' => User::where('username', $request->username)->exists(),
+            'all_usernames' => User::pluck('username')->toArray(),
+        ]);
 
         // Validate the request
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:users,email',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'username' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('users'),
+            ],
             'ic_number' => 'required|string|max:14',
             'phone' => 'required|string|max:15',
-            'username' => 'required|string|max:255|unique:users,username',
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                Rule::unique('users'),
+            ],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         // Create the user
-        $user = User::create([
+        User::create([
             'name' => $validated['name'],
             'username' => $validated['username'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
             'ic_num' => $validated['ic_number'],
-            'phone_num' => $validated['phone'],
-            'role' => 'customer',
+            'phone' => $validated['phone'],
+            'email' => $validated['email'],
             'status' => 'not verified',
+            'email_verified_at' => now(),
+            'role' => 'customer',
+            'password' => Hash::make($validated['password']),
         ]);
+        
+        // Remove preverify_code cookie after registration
+        setcookie('preverify_code', '', time() - 3600, '/');
 
-        // Remove all cookies by expiring them
-        foreach (array_keys($_COOKIE) as $name) {
-            setcookie($name, '', time() - 3600, '/');
-            unset($_COOKIE[$name]);
-        }
-
-        // Always redirect for Inertia requests
-        return redirect()->route('registration.success');
+        return redirect()->back()->with('success', 'Registration successful');
     }
 
     public function registrationSuccess()

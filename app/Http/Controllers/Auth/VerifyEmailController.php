@@ -26,7 +26,6 @@ class VerifyEmailController extends Controller
         if ($request->user()->markEmailAsVerified()) {
             /** @var \Illuminate\Contracts\Auth\MustVerifyEmail $user */
             $user = $request->user();
-            User::where('id', $user->id)->update(['status' => 'not verified']);
             event(new Verified($user));
             if($user->role === 'customer') {
                 return redirect()->intended(route('customer.dashboard', absolute: false).'?verified=1');

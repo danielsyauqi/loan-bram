@@ -1,4 +1,5 @@
 <template>
+      <Head title="Account Not Active" />
   <div class="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-md w-full text-center">
       <div class="flex flex-col items-center mb-6">
@@ -19,6 +20,12 @@
       >
         Contact Support
       </a>
+    <a
+      href="/"
+      class="mt-4 w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 text-base font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+    >
+      Back to Home
+    </a>
     </div>
   </div>
 </template>

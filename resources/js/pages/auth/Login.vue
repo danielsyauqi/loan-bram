@@ -166,6 +166,8 @@ onMounted(() => {
         :details="successDetails"
         @close="closeSuccessModal"
     />
+
+    
 </template>
 
 <style scoped>

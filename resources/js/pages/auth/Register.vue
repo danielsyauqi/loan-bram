@@ -171,7 +171,12 @@ const finalForm = useForm({
     password_confirmation: '',
 });
 
-const completeRegistration = () => {
+const isRegistering = ref(false);
+const registrationSuccess = ref(false);
+
+const completeRegistration = async () => {
+    if (isRegistering.value) return; // Prevent double submit
+    isRegistering.value = true;
     errorMessages.value = [];
     // Check required fields for step 3
     if (!passwordForm.password) errorMessages.value.push('Password is required.');
@@ -183,6 +188,7 @@ const completeRegistration = () => {
     });
     if (errorMessages.value.length > 0) {
         showErrorModal.value = true;
+        isRegistering.value = false;
         return;
     }
     finalForm.email = verifiedEmail.value || emailForm.email;
@@ -193,8 +199,12 @@ const completeRegistration = () => {
     finalForm.password = passwordForm.password;
     finalForm.password_confirmation = passwordForm.password_confirmation;
     finalForm.post(route('register.finished'), {
+        onSuccess: () => {
+            registrationSuccess.value = true;
+        },
         onFinish: () => {
             finalForm.reset('password', 'password_confirmation');
+            isRegistering.value = false;
         },
     });
 };
@@ -478,252 +488,296 @@ onMounted(async () => {
         <Head title="Register" />
 
         <div class="split-container">
-            <!-- Left side: Form -->
+            <!-- Left side: Form or Success Message -->
             <div class="split-form">
                 <div class="form-container">
-                    <div class="auth-header">
-                        <h2 class="auth-title">Create an Account</h2>
-                        <p class="auth-description">Join Loan Bram for streamlined loan management</p>
-                    </div>
-
-                    <form v-if="step === 1" @submit.prevent="sendVerificationEmail" class="auth-form">
-                        <div class="form-group span-full">
-                            <Label for="email" class="form-label">Email Address</Label>
-                            <div class="input-with-icon">
-                                <Mail class="input-icon" />
-                                <Input id="email" type="email" required autofocus autocomplete="email" v-model="emailForm.email" placeholder="email@example.com" class="auth-input" />
-                            </div>
-                            <InputError :message="emailForm.errors.email || emailVerificationError" />
-                        </div>
-                        <Button type="submit" class="submit-button span-full" :disabled="emailVerificationStatus === 'sending'">
-                            <LoaderCircle v-if="emailVerificationStatus === 'sending'" class="h-4 w-4 animate-spin mr-2" />
-                            <span v-else>Send Verification Email</span>
-                        </Button>
-                        <div v-if="emailVerificationStatus === 'sent'" class="text-green-500 mt-2">Verification code sent! Please check your email.</div>
-
-                        <!-- Verification Code Section (frontend only) -->
-                        <div v-if="emailVerificationStatus === 'sent'" class="form-group span-full mt-6">
-                            <Label for="verification_code" class="form-label">Enter Verification Code</Label>
-                            <div class="input-with-icon">
-                                <svg class="input-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-                                <Input
-                                    id="verification_code"
-                                    type="text"
-                                    maxlength="6"
-                                    autocomplete="one-time-code"
-                                    v-model="verificationForm.code"
-                                    placeholder="6-digit code"
-                                    class="auth-input"
-                                />
-                            </div>
-                            <InputError :message="verificationForm.errors.code || verificationError" />
-                        </div>
-                        <Button
-                            v-if="emailVerificationStatus === 'sent'"
-                            type="button"
-                            class="submit-button span-full mt-2"
-                            :disabled="!verificationForm.code || verificationForm.code.length !== 6"
-                            @click="verifyEmailCode"
+                    <div
+                        v-if="registrationSuccess"
+                        class="flex flex-col items-center justify-center min-h-[60vh]"
+                    >
+                        <div
+                            class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-md w-full text-center border border-green-300"
                         >
-                            Verify Code
-                        </Button>
-                        <div v-if="codeVerificationStatus === 'verifying'" class="flex items-center text-blue-500 mt-2">
-                            <LoaderCircle class="h-4 w-4 animate-spin mr-2" />
-                            Verifying code...
-                        </div>
-                        <div v-if="codeVerificationStatus === 'verified'" class="text-green-500 mt-2">
-                            Email verified! Proceeding to next step...
-                        </div>
-                        <div v-if="codeVerificationStatus === 'error'" class="text-red-500 mt-2">
-                            {{ verificationError || 'Invalid or expired code.' }}
-                        </div>
-                        <!-- End Verification Code Section -->
-
-                        <div class="auth-footer">
-                            <div class="auth-divider">
-                                <hr />
-                                <span>OR</span>
-                                <hr />
+                            <div class="flex flex-col items-center mb-6">
+                                <div class="rounded-full bg-green-100 p-4 mb-4">
+                                    <svg
+                                        class="h-12 w-12 text-green-500"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M5 13l4 4L19 7"
+                                        />
+                                    </svg>
+                                </div>
+                                <h2 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                                    Registration Successful!
+                                </h2>
+                                <p class="text-lg text-gray-600 dark:text-gray-300 mb-4">
+                                    Your account has been created.<br />
+                                    You can now log in to your account.
+                                </p>
                             </div>
-                            
-                            <div class="register-prompt">
-                                Already have an account?
-                                <TextLink :href="route('login')" :tabindex="5" class="register-link">Sign in</TextLink>
-                            </div>
-                            
-                            <div class="home-button-container mt-4">
-                                <TextLink :href="route('home')" class="home-button" :tabindex="6">
-                                    <span>← Back to Home</span>
-                                </TextLink>
-                            </div>
-                        </div>
-                    </form>
-                    <form v-else-if="step === 2" @submit.prevent="goToStep3" class="auth-form">
-                        <!-- Readonly Email Field -->
-                        <div class="form-group span-full">
-                            <Label for="verified_email" class="form-label">Email Address</Label>
-                            <div class="input-with-icon">
-                                <Mail class="input-icon" />
-                                <span
-                                    id="verified_email"
-                                    class="auth-input bg-gray-100 cursor-not-allowed flex items-center h-10 px-3 rounded border border-gray-300 text-gray-700 select-text"
-                                    tabindex="-1"
-                                >{{ verifiedEmail }}</span>
-                            </div>
-                        </div>
-                        <!-- Cancel Button -->
-                        <div class="form-group span-full" style="margin-bottom: -1.5rem;">
-                            <Button type="button" class="bg-red-600 hover:bg-red-700 text-white mb-2" @click="cancelEmailVerification">Cancel & Change Email</Button>
-                        </div>
-                        <!-- Personal details fields -->
-                        <!-- Full Name -->
-                        <div class="form-group span-full">
-                            <Label for="name" class="form-label">Full Name</Label>
-                            <div class="input-with-icon">
-                                <User class="input-icon" />
-                                <Input id="name" type="text" required autofocus autocomplete="name" v-model="detailsForm.name" placeholder="John Doe" class="auth-input" />
-                            </div>
-                            <InputError :message="detailsForm.errors.name" />
-                        </div>
-                        <!-- Username -->
-                        <div class="form-group span-half">
-                            <Label for="username" class="form-label">Username</Label>
-                            <div class="input-with-icon">
-                                <UserCircle class="input-icon" />
-                                <Input 
-                                    id="username" 
-                                    type="text" 
-                                    required 
-                                    :tabindex="2" 
-                                    autocomplete="username" 
-                                    v-model="detailsForm.username" 
-                                    placeholder="johndoe123"
-                                    class="auth-input" 
-                                />
-                            </div>
-                            <div v-if="detailsForm.errors.username" class="text-red-500 text-sm mt-1">{{ detailsForm.errors.username }}</div>
-                            <div v-else-if="usernameAvailable === false" class="text-red-500 text-sm mt-1">This username is already taken</div>
-                            <div v-else-if="usernameAvailable === true" class="text-green-500 text-sm mt-1">Username is available</div>
-                            <div v-else-if="detailsForm.username && detailsForm.username.length < 3" class="text-orange-500 text-sm mt-1">Username must be at least 3 characters</div>
-                            <p v-else class="text-xs text-gray-600 dark:text-gray-400">
-                                Username must be at least 3 characters
-                            </p>
-                        </div>
-
-                        <!-- IC Number -->
-                        <div class="form-group span-half">
-                            <Label for="ic_number" class="form-label">IC Number</Label>
-                            <div class="input-with-icon">
-                                <CreditCard class="input-icon" />
-                                <Input 
-                                    id="ic_number" 
-                                    type="text" 
-                                    required 
-                                    :tabindex="4" 
-                                    v-model="detailsForm.ic_number" 
-                                    placeholder="000000-00-0000"
-                                    class="auth-input"
-                                    @input="formatICNumber"
-                                />
-                            </div>
-                            <div v-if="detailsForm.errors.ic_number" class="text-red-500 text-sm mt-1">{{ detailsForm.errors.ic_number }}</div>
-                            <div v-else-if="icNumberAvailable === false" class="text-red-500 text-sm mt-1">This IC number is already registered</div>
-                            <div v-else-if="!icNumberValid && detailsForm.ic_number" class="text-orange-500 text-sm mt-1">Please enter a valid IC number</div>
-                            <div v-else-if="icNumberAvailable === true" class="text-green-500 text-sm mt-1">IC number is valid</div>
-                            <p v-else class="text-xs text-gray-600 dark:text-gray-400">
-                                Please enter a valid phone number
-                            </p>
-                        </div>
-
-                        <!-- Phone Number -->
-                        <div class="form-group span-half">
-                            <Label for="phone" class="form-label">Phone Number</Label>
-                            <div class="input-with-icon">
-                                <Phone class="input-icon" />
-                                <Input 
-                                    id="phone" 
-                                    type="text" 
-                                    required 
-                                    :tabindex="5" 
-                                    autocomplete="tel" 
-                                    v-model="detailsForm.phone" 
-                                    placeholder="011-123 4567"
-                                    class="auth-input"
-                                    @input="formatPhoneNumber"
-                                />
-
-                            </div>
-                            <div v-if="detailsForm.errors.phone" class="text-red-500 text-sm mt-1">{{ detailsForm.errors.phone }}</div>
-                            <div v-else-if="detailsForm.phone && detailsForm.phone.length < 10" class="text-orange-500 text-sm mt-1">Please enter a complete phone number</div>
-                            <div v-else-if="detailsForm.phone && detailsForm.phone.length >= 10" class="text-green-500 text-sm mt-1">Valid phone number format</div>
-                            <p v-else class="text-xs text-gray-600 dark:text-gray-400">
-                                Please enter a valid phone number
-                            </p>
-                        </div>
-
-                        <div class="flex w-full gap-4">
                             <Button
-                                type="submit"
-                                class="submit-button"
-                                style="flex: 0 0 70%; max-width: 70%;"
+                                class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                @click="$inertia.visit(route('login'))"
                             >
-                                Next
+                                Go to Login
                             </Button>
+                        </div>
+                    </div>
+                    <div v-else>
+                        <div class="auth-header">
+                            <h2 class="auth-title">Create an Account</h2>
+                            <p class="auth-description">Join Loan Bram for streamlined loan management</p>
+                        </div>
+
+                        <form v-if="step === 1" @submit.prevent="sendVerificationEmail" class="auth-form">
+                            <div class="form-group span-full">
+                                <Label for="email" class="form-label">Email Address</Label>
+                                <div class="input-with-icon">
+                                    <Mail class="input-icon" />
+                                    <Input id="email" type="email" required autofocus autocomplete="email" v-model="emailForm.email" placeholder="email@example.com" class="auth-input" />
+                                </div>
+                                <InputError :message="emailForm.errors.email || emailVerificationError" />
+                            </div>
+                            <Button type="submit" class="submit-button span-full" :disabled="emailVerificationStatus === 'sending'">
+                                <LoaderCircle v-if="emailVerificationStatus === 'sending'" class="h-4 w-4 animate-spin mr-2" />
+                                <span v-else>Send Verification Email</span>
+                            </Button>
+                            <div v-if="emailVerificationStatus === 'sent'" class="text-sm text-green-500 mt-2">Verification code sent! Please check your email. If not in inbox, check spam folder.</div>
+
+                            <!-- Verification Code Section (frontend only) -->
+                            <div v-if="emailVerificationStatus === 'sent'" class="form-group span-full mt-6">
+                                <Label for="verification_code" class="form-label">Enter Verification Code</Label>
+                                <div class="input-with-icon">
+                                    <svg class="input-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                                    <Input
+                                        id="verification_code"
+                                        type="text"
+                                        maxlength="6"
+                                        autocomplete="one-time-code"
+                                        v-model="verificationForm.code"
+                                        placeholder="6-digit code"
+                                        class="auth-input"
+                                    />
+                                </div>
+                                <InputError :message="verificationForm.errors.code || verificationError" />
+                            </div>
                             <Button
+                                v-if="emailVerificationStatus === 'sent'"
                                 type="button"
-                                class="back-button"
-                                style="flex: 0 0 30%; max-width: 30%;"
-                                @click="$inertia.visit(route('home'))"
+                                class="submit-button span-full mt-2"
+                                :disabled="!verificationForm.code || verificationForm.code.length !== 6"
+                                @click="verifyEmailCode"
                             >
-                                Back to Home
+                                Verify Code
                             </Button>
-                        </div>
-                    </form>
-                    <form v-else-if="step === 3" @submit.prevent="completeRegistration" class="auth-form">
-                        <!-- Password fields (reuse your existing fields/validation) -->
-                        <!-- Password -->
-                        <div class="form-group span-half">
-                            <Label for="password" class="form-label">Password</Label>
-                            <div class="input-with-icon">
-                                <Lock class="input-icon" />
-                                <Input id="password" :type="showPassword ? 'text' : 'password'" required autocomplete="new-password" v-model="passwordForm.password" placeholder="Create a strong password" class="auth-input" />
-                                <button type="button" @click="showPassword = !showPassword" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
-                                    <span v-if="showPassword">Hide</span>
-                                    <span v-else>Show</span>
-                                </button>
+                            <div v-if="codeVerificationStatus === 'verifying'" class="flex items-center text-blue-500 mt-2">
+                                <LoaderCircle class="h-4 w-4 animate-spin mr-2" />
+                                Verifying code...
                             </div>
-                            <InputError :message="passwordForm.errors.password" />
-                            <!-- Password rules -->
-                            <ul class="password-rules">
-                                <li v-for="rule in passwordRules" :key="rule.label" :class="{'rule-met': rule.test(passwordForm.password), 'rule-unmet': !rule.test(passwordForm.password)}">
-                                    <span v-if="rule.test(passwordForm.password)" class="rule-icon">✔️</span>
-                                    <span v-else class="rule-icon">❌</span>
-                                    {{ rule.label }}
-                                </li>
-                            </ul>
-                        </div>
-                        <!-- Confirm Password -->
-                        <div class="form-group span-half">
-                            <Label for="password_confirmation" class="form-label">Confirm Password</Label>
-                            <div class="input-with-icon">
-                                <Lock class="input-icon" />
-                                <Input id="password_confirmation" :type="showConfirmPassword ? 'text' : 'password'" required autocomplete="new-password" v-model="passwordForm.password_confirmation" placeholder="Confirm your password" class="auth-input" />
-                                <button type="button" @click="showConfirmPassword = !showConfirmPassword" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
-                                    <span v-if="showConfirmPassword">Hide</span>
-                                    <span v-else>Show</span>
-                                </button>
+                            <div v-if="codeVerificationStatus === 'verified'" class="text-green-500 mt-2">
+                                Email verified! Proceeding to next step...
                             </div>
-                            <InputError :message="confirmPasswordError" />
-                        </div>
-                        <!-- INSERT_YOUR_CODE -->
-                        <!-- Back Button -->
-                        <div class="form-group span-full" style="margin-bottom: -1.5rem;">
-                            <Button type="button" class="bg-gray-200 hover:bg-gray-300 text-gray-700 mb-2" @click="step = 2">
-                                Back
+                            <div v-if="codeVerificationStatus === 'error'" class="text-red-500 mt-2">
+                                {{ verificationError || 'Invalid or expired code.' }}
+                            </div>
+                            <!-- End Verification Code Section -->
+
+                            <div class="auth-footer">
+                                <div class="auth-divider">
+                                    <hr />
+                                    <span>OR</span>
+                                    <hr />
+                                </div>
+                                
+                                <div class="register-prompt">
+                                    Already have an account?
+                                    <TextLink :href="route('login')" :tabindex="5" class="register-link">Sign in</TextLink>
+                                </div>
+                                
+                                <div class="home-button-container mt-4">
+                                    <TextLink :href="route('home')" class="home-button" :tabindex="6">
+                                        <span>← Back to Home</span>
+                                    </TextLink>
+                                </div>
+                            </div>
+                        </form>
+                        <form v-else-if="step === 2" @submit.prevent="goToStep3" class="auth-form">
+                            <!-- Readonly Email Field -->
+                            <div class="form-group span-full">
+                                <Label for="verified_email" class="form-label">Email Address</Label>
+                                <div class="input-with-icon">
+                                    <Mail class="input-icon" />
+                                    <span
+                                        id="verified_email"
+                                        class="auth-input bg-gray-100 cursor-not-allowed flex items-center h-10 px-3 rounded border border-gray-300 text-gray-700 select-text"
+                                        tabindex="-1"
+                                    >{{ verifiedEmail }}</span>
+                                </div>
+                            </div>
+                            <!-- Cancel Button -->
+                            <div class="form-group span-full" style="margin-bottom: -1.5rem;">
+                                <Button type="button" class="bg-red-600 hover:bg-red-700 text-white mb-2" @click="cancelEmailVerification">Cancel & Change Email</Button>
+                            </div>
+                            <!-- Personal details fields -->
+                            <!-- Full Name -->
+                            <div class="form-group span-full">
+                                <Label for="name" class="form-label">Full Name</Label>
+                                <div class="input-with-icon">
+                                    <User class="input-icon" />
+                                    <Input id="name" type="text" required autofocus autocomplete="name" v-model="detailsForm.name" placeholder="John Doe" class="auth-input" />
+                                </div>
+                                <InputError :message="detailsForm.errors.name" />
+                            </div>
+                            <!-- Username -->
+                            <div class="form-group span-half">
+                                <Label for="username" class="form-label">Username</Label>
+                                <div class="input-with-icon">
+                                    <UserCircle class="input-icon" />
+                                    <Input 
+                                        id="username" 
+                                        type="text" 
+                                        required 
+                                        :tabindex="2" 
+                                        autocomplete="username" 
+                                        v-model="detailsForm.username" 
+                                        placeholder="johndoe123"
+                                        class="auth-input" 
+                                    />
+                                </div>
+                                <div v-if="detailsForm.errors.username" class="text-red-500 text-sm mt-1">{{ detailsForm.errors.username }}</div>
+                                <div v-else-if="usernameAvailable === false" class="text-red-500 text-sm mt-1">This username is already taken</div>
+                                <div v-else-if="usernameAvailable === true" class="text-green-500 text-sm mt-1">Username is available</div>
+                                <div v-else-if="detailsForm.username && detailsForm.username.length < 3" class="text-orange-500 text-sm mt-1">Username must be at least 3 characters</div>
+                                <p v-else class="text-xs text-gray-600 dark:text-gray-400">
+                                    Username must be at least 3 characters
+                                </p>
+                            </div>
+
+                            <!-- IC Number -->
+                            <div class="form-group span-half">
+                                <Label for="ic_number" class="form-label">IC Number</Label>
+                                <div class="input-with-icon">
+                                    <CreditCard class="input-icon" />
+                                    <Input 
+                                        id="ic_number" 
+                                        type="text" 
+                                        required 
+                                        :tabindex="4" 
+                                        v-model="detailsForm.ic_number" 
+                                        placeholder="000000-00-0000"
+                                        class="auth-input"
+                                        @input="formatICNumber"
+                                    />
+                                </div>
+                                <div v-if="detailsForm.errors.ic_number" class="text-red-500 text-sm mt-1">{{ detailsForm.errors.ic_number }}</div>
+                                <div v-else-if="icNumberAvailable === false" class="text-red-500 text-sm mt-1">This IC number is already registered</div>
+                                <div v-else-if="!icNumberValid && detailsForm.ic_number" class="text-orange-500 text-sm mt-1">Please enter a valid IC number</div>
+                                <div v-else-if="icNumberAvailable === true" class="text-green-500 text-sm mt-1">IC number is valid</div>
+                                <p v-else class="text-xs text-gray-600 dark:text-gray-400">
+                                    Please enter a valid phone number
+                                </p>
+                            </div>
+
+                            <!-- Phone Number -->
+                            <div class="form-group span-half">
+                                <Label for="phone" class="form-label">Phone Number</Label>
+                                <div class="input-with-icon">
+                                    <Phone class="input-icon" />
+                                    <Input 
+                                        id="phone" 
+                                        type="text" 
+                                        required 
+                                        :tabindex="5" 
+                                        autocomplete="tel" 
+                                        v-model="detailsForm.phone" 
+                                        placeholder="011-123 4567"
+                                        class="auth-input"
+                                        @input="formatPhoneNumber"
+                                    />
+
+                                </div>
+                                <div v-if="detailsForm.errors.phone" class="text-red-500 text-sm mt-1">{{ detailsForm.errors.phone }}</div>
+                                <div v-else-if="detailsForm.phone && detailsForm.phone.length < 10" class="text-orange-500 text-sm mt-1">Please enter a complete phone number</div>
+                                <div v-else-if="detailsForm.phone && detailsForm.phone.length >= 10" class="text-green-500 text-sm mt-1">Valid phone number format</div>
+                                <p v-else class="text-xs text-gray-600 dark:text-gray-400">
+                                    Please enter a valid phone number
+                                </p>
+                            </div>
+
+                            <div class="flex w-full gap-4">
+                                <Button
+                                    type="submit"
+                                    class="submit-button"
+                                    style="flex: 0 0 70%; max-width: 70%;"
+                                >
+                                    Next
+                                </Button>
+                                <Button
+                                    type="button"
+                                    class="back-button"
+                                    style="flex: 0 0 30%; max-width: 30%;"
+                                    @click="$inertia.visit(route('home'))"
+                                >
+                                    Back to Home
+                                </Button>
+                            </div>
+                        </form>
+                        <form v-else-if="step === 3" @submit.prevent="completeRegistration" class="auth-form">
+                            <!-- Password fields (reuse your existing fields/validation) -->
+                            <!-- Password -->
+                            <div class="form-group span-half">
+                                <Label for="password" class="form-label">Password</Label>
+                                <div class="input-with-icon">
+                                    <Lock class="input-icon" />
+                                    <Input id="password" :type="showPassword ? 'text' : 'password'" required autocomplete="new-password" v-model="passwordForm.password" placeholder="Create a strong password" class="auth-input" />
+                                    <button type="button" @click="showPassword = !showPassword" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                                        <span v-if="showPassword">Hide</span>
+                                        <span v-else>Show</span>
+                                    </button>
+                                </div>
+                                <InputError :message="passwordForm.errors.password" />
+                                <!-- Password rules -->
+                                <ul class="password-rules">
+                                    <li v-for="rule in passwordRules" :key="rule.label" :class="{'rule-met': rule.test(passwordForm.password), 'rule-unmet': !rule.test(passwordForm.password)}">
+                                        <span v-if="rule.test(passwordForm.password)" class="rule-icon">✔️</span>
+                                        <span v-else class="rule-icon">❌</span>
+                                        {{ rule.label }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <!-- Confirm Password -->
+                            <div class="form-group span-half">
+                                <Label for="password_confirmation" class="form-label">Confirm Password</Label>
+                                <div class="input-with-icon">
+                                    <Lock class="input-icon" />
+                                    <Input id="password_confirmation" :type="showConfirmPassword ? 'text' : 'password'" required autocomplete="new-password" v-model="passwordForm.password_confirmation" placeholder="Confirm your password" class="auth-input" />
+                                    <button type="button" @click="showConfirmPassword = !showConfirmPassword" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none">
+                                        <span v-if="showConfirmPassword">Hide</span>
+                                        <span v-else>Show</span>
+                                    </button>
+                                </div>
+                                <InputError :message="confirmPasswordError" />
+                            </div>
+                            <!-- INSERT_YOUR_CODE -->
+                            <!-- Back Button -->
+                            <div class="form-group span-full" style="margin-bottom: -1.5rem;">
+                                <Button type="button" class="bg-gray-200 hover:bg-gray-300 text-gray-700 mb-2" @click="step = 2">
+                                    Back
+                                </Button>
+                            </div>
+                            <Button :disabled="isRegistering" @click="completeRegistration" class="submit-button span-full">
+                                Create Account
                             </Button>
-                        </div>
-                        <Button @click="completeRegistration" class="submit-button span-full">Create Account</Button>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
             
@@ -743,16 +797,6 @@ onMounted(async () => {
         :messages="errorMessages"
         @close="closeErrorModal"
     />
-
-    <!-- Success Modal -->
-    <!--
-    <SuccessModal
-        :show="showSuccessModal"
-        modalTitle="User Created Successfully"
-        :message="successMessage"
-        @close="closeSuccessModal"
-    />
-    -->
 </template>
 
 
