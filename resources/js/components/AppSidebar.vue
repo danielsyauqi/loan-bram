@@ -4,8 +4,8 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Bell, Folder, LayoutGrid, Library, List, ClipboardList, Settings, UserIcon, Plus, LayoutDashboard, Star, Users } from 'lucide-vue-next';
-import { onMounted, onUnmounted, ref, computed } from 'vue';
+import { BookOpen, Bell, Folder, LayoutGrid, Library, List, ClipboardList, Settings, UserIcon, Plus, Star, Users } from 'lucide-vue-next';
+import { onMounted, onUnmounted, computed } from 'vue';
 import { useNotificationStore } from '../stores/notificationStore';
 import AppLogo from './AppLogo.vue';   
 import NavPlatform from '@/components/NavPlatform.vue';
@@ -34,13 +34,7 @@ onUnmounted(() => {
     stopPolling();
 });
 
-// Check if the user is an admin
-const isAdmin = user?.is_admin === 1;
 
-// Check if the user has specific roles
-const hasRole = (role: string) => {
-  return user?.roles?.includes(role);
-};
 
 // Custom notification item with badge
 const createNotificationItem = (title: string, href: string, icon: any): NavItem => {
@@ -226,7 +220,7 @@ const footerNavItems: NavItem[] = [
 
 
             <!-- Loan Management Section -->
-            <div v-if="user?.role === 'admin'" class="px-2 py-2">
+            <div v-if="user?.role === 'admin' || user?.role === 'superuser'" class="px-2 py-2">
                 <NavLoanManagement :items="loanManagementNavItems" />
             </div>
 
@@ -242,7 +236,7 @@ const footerNavItems: NavItem[] = [
             </div>
 
             <!-- Loan Applications for Agent/Sub Agent/Admin -->
-            <div v-if="user?.role === 'agent' || user?.role === 'sub agent' || user?.role === 'admin'" class="px-2 py-2">
+            <div v-if="user?.role === 'agent' || user?.role === 'sub agent' || user?.role === 'admin' || user?.role === 'superuser'" class="px-2 py-2">
                 <NavLoanApplications :items="loanApplicationsNavItems" />
             </div>
 
@@ -253,7 +247,7 @@ const footerNavItems: NavItem[] = [
             </div>
 
             <!-- Management Section -->
-            <div v-if="user?.role === 'admin'" class="px-2 py-2">
+            <div v-if="user?.role === 'admin' || user?.role === 'superuser'" class="px-2 py-2">
                 <NavManagement :items="managementNavItems" />
             </div>
 

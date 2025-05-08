@@ -14,7 +14,7 @@ const userRole = computed(() => page.props.auth.user.role);
 <template>
     <SidebarGroup class="px-2 py-0">
         <SidebarGroupLabel>
-            {{ userRole === 'admin' ? 'Admin Management' : userRole === 'agent' ? 'Agent Management' : 'Management' }}
+            {{ userRole === 'admin' || userRole === 'superuser' ? 'Admin Management' : userRole === 'agent' ? 'Agent Management' : 'Management' }}
         </SidebarGroupLabel>
         <SidebarMenu>
             <SidebarMenuItem v-for="item in items" :key="item.title">

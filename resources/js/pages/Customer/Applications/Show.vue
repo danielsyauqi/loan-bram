@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { dateUtils, formatCurrency as formatCurrencyUtil, arrayUtils } from '@/lib/utils';
+import { dateUtils, arrayUtils } from '@/lib/utils';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/vue3';

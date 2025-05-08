@@ -38,7 +38,7 @@ const authUser = ref(props.authUser);
 
 // Check if user is admin
 const isAdmin = computed(() => {
-    return authUser.value?.role === 'admin';
+    return authUser.value?.role === 'admin' || authUser.value?.role === 'superuser';
 });
 
 
@@ -60,7 +60,7 @@ const filteredModules = computed(() => {
     
     // First filter by user permissions if user is not admin
     let permissionFiltered = modules.value;
-    if (authUser.value && authUser.value.role !== 'admin') {
+    if (authUser.value && authUser.value.role !== 'admin' && authUser.value.role !== 'superuser') {
         const permissions = authUser.value.module_permissions || [];
         permissionFiltered = modules.value.filter(module => 
             permissions.includes(module.id)

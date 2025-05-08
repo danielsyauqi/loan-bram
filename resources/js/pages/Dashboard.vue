@@ -29,7 +29,7 @@ const userRole = computed(() => (user.value as any)?.role || 'user');
 
 // Breadcrumbs for the page
 const breadcrumbs: BreadcrumbItem[] = [
-  userRole.value === 'admin'
+  userRole.value === 'admin' || userRole.value === 'superuser'
     ? {
         title: 'Admin Dashboard',
         href: '/admin/dashboard',
@@ -375,7 +375,7 @@ const stats = ref([
   <Head :title="userRole === 'admin' ? 'Admin Dashboard' : userRole === 'agent' ? 'Agent Dashboard' : userRole === 'sub agent' ? 'Sub Agent Dashboard' : 'Dashboard'" />
 
   <AppLayout :breadcrumbs="breadcrumbs">
-    <div v-if="userRole === 'admin' || userRole === 'agent' || userRole === 'sub agent'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900 animate__animated animate__fadeIn">
+    <div v-if="userRole === 'admin' || userRole === 'agent' || userRole === 'sub agent' || userRole === 'superuser'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900 animate__animated animate__fadeIn">
       <!-- Welcome Header -->
       <div class="p-6 bg-white rounded-xl shadow-lg dark:bg-gray-800 transition-all duration-300">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">

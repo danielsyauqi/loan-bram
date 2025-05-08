@@ -344,7 +344,7 @@ const submit = () => {
     <Head title="Edit User" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div v-if="userRole === 'admin' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userRole === 'admin' || userRole === 'superuser' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
             <!-- Header Section -->
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">Edit User</h1>

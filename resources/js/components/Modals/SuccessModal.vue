@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
 
 const props = defineProps<{
     show: boolean;
@@ -17,7 +16,6 @@ const closeModal = () => {
 
 // Provide default values
 const modalTitle = props.title || 'Success!';
-const buttonText = props.okButtonText || 'OK';
 </script>
 
 <template>

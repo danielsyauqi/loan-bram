@@ -74,7 +74,7 @@ class DashboardController extends Controller
         $userRole = Auth::user()->role;
         $userId = Auth::user()->id;
 
-        if($userRole === 'admin'){
+        if($userRole === 'admin' || $userRole === 'superuser'){
         $totalLoanApplications = LoanApplications::count() ?? 0;
         $weekLoanApplications = LoanApplications::where('created_at', '>=', now()->subWeek())->count() ?? 0;
         $weekLoanActive = LoanApplications::where(function($query) {

@@ -453,12 +453,6 @@ class UserManagementController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . Auth::id(),
-            'username' => 'required|string|max:255|unique:users,username,' . Auth::id(),
-            'user_photo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
 
         try {
             $user = User::findOrFail(Auth::id());

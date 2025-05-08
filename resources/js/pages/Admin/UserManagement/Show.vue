@@ -105,7 +105,7 @@ const isModulePermitted = (moduleId: number) => {
     <Head title="User Details" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div v-if="userRole === 'admin' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userRole === 'admin' || userRole === 'superuser' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 sm:p-6 bg-gray-50 dark:bg-gray-900">
             <!-- Header Section -->
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>

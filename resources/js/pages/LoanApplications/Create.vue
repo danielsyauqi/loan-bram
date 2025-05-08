@@ -294,7 +294,7 @@ const submitForm = () => {
     // Validate required fields
     let hasErrors = false;
     
-    if(newApplication.value === false){
+   /*  if(newApplication.value === false){
         if (!form.product_id) {
             errorMessages.value.push('Please select a product');
             hasErrors = true;
@@ -329,8 +329,10 @@ const submitForm = () => {
         }
         
         
-        
-        form.post(route('loan-applications.store'), {
+       
+    } */
+ 
+    form.post(route('loan-applications.store'), {
             preserveScroll: false,
             preserveState: false,
             onSuccess: () => {
@@ -344,8 +346,6 @@ const submitForm = () => {
                 showErrorModal.value = true;
             }
         });
-    }
-
     newApplication.value = false;
 };
 
@@ -548,7 +548,7 @@ function formatICNumberInput(event: Event) {
     <Head :title="`New ${module.title} Application`" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div v-if="userRole === 'admin' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userRole === 'admin' || userRole === 'superuser' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
             <form @submit.prevent="submitForm" class="space-y-6">                        
 
             <!-- Header -->

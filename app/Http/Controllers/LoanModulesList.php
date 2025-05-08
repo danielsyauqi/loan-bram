@@ -6,6 +6,8 @@ use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Models\LoanApplications;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use App\Models\LoanModules as LoanModulesModel;
 
 class LoanModulesList extends Controller
@@ -22,8 +24,10 @@ class LoanModulesList extends Controller
         
         // Get modules based on user permissions
         $query = LoanModulesModel::query();
-        
 
+
+        // If user is NOT admin or superuser, apply module_permissions filter
+        if (!in_array($user->role, ['admin', 'superuser'])) {
             // Get module permissions from user model (collection of module ids)
             $modulePermissions = $user->module_permissions ? json_decode($user->module_permissions, true) : [];
             
@@ -38,7 +42,7 @@ class LoanModulesList extends Controller
                     'message' => 'Please contact your administrator to get access to the loan modules'
                 ];
             }
-
+        }
         
         $transformedModules = $query->get()->map(function ($module) {
             // Get products or empty array if none exist

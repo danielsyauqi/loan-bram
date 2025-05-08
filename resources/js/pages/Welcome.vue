@@ -15,7 +15,7 @@
           <a href="/register" class="px-6 py-2.5 bg-black text-white text-sm rounded-full hover:bg-gray-800 transition-all duration-300 nav-item button-animation">Register</a>
         </div>
       </div>
-            </nav>
+        </nav>
 
     <!-- Minimalist Hero Section -->
     <section class="relative pt-36 pb-24">

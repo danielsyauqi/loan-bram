@@ -2,24 +2,26 @@
 
 use Inertia\Inertia;
 use App\Models\LoanModules;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProductsController;
+use App\Http\Controllers\ShortcutController;
+use App\Http\Controllers\SubAgentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LoanProductsController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\LoanApplicationController;
-use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ModulesManagementController;
-use App\Http\Controllers\LoanModulesList as LoanModulesController;
-use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\ShortcutController;
-use App\Http\Controllers\Auth\EmailPreVerificationController;
 use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\SubAgentController;
+use App\Http\Controllers\Auth\EmailPreVerificationController;
+use App\Http\Controllers\LoanModulesList as LoanModulesController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
+
 
 Route::get('loan-modules', [LoanModulesController::class, 'index'])->middleware(['auth', 'verified'])->name('loan-modules');
 

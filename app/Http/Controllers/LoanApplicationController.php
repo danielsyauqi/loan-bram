@@ -71,9 +71,8 @@ class LoanApplicationController extends Controller
         $customers = User::whereIn('id', $customer_id)->get();
         
 
-        if(Auth::user()->role === 'admin'){
+        if(Auth::user()->role === 'admin' || Auth::user()->role === 'superuser'){
         // Get all applications for this module
-        Log::info('Admin');
         $applications = LoanApplications::where('module_id', $moduleId)
             ->get()
             ->map(function ($application) {
@@ -172,20 +171,25 @@ class LoanApplicationController extends Controller
                     
         }
         // Check if user is admin   
-        $isAdmin = Auth::check() && Auth::user()->role === 'admin';
+        $isAdmin = Auth::check() && (Auth::user()->role === 'admin' || Auth::user()->role === 'superuser');
 
-        $modulePermission = Auth::user()->module_permissions;
-        $modulePermission = json_decode($modulePermission, true) ?? [];
-        
-        $modulePermission = array_map(function($item) {
-            return (int)$item;
-        }, $modulePermission);
-        
-        $hasModulePermission = in_array((int)$moduleId, $modulePermission);
+        // Exclude module permission check for admin or superuser
+        if (Auth::user()->role === 'admin' || Auth::user()->role === 'superuser') {
+            $modulePermissionValue = true;
+        } else {
+            $modulePermission = Auth::user()->module_permissions;
+            $modulePermission = json_decode($modulePermission, true) ?? [];
+            
+            $modulePermission = array_map(function($item) {
+                return (int)$item;
+            }, $modulePermission);
+            
+            $hasModulePermission = in_array((int)$moduleId, $modulePermission);
 
-        $modulePermissionValue = true;
-        if (!$hasModulePermission) {
-            $modulePermissionValue = false;
+            $modulePermissionValue = true;
+            if (!$hasModulePermission) {
+                $modulePermissionValue = false;
+            }
         }
 
 
@@ -311,11 +315,16 @@ class LoanApplicationController extends Controller
             }
         }
         
-        // Fetch all users with role 'Agent' to populate the agent selection dropdown
-        $agents = User::where('role', 'agent')
-            ->orWhere('role', 'sub agent')
-            ->select('id', 'name', 'email', 'phone_num', 'role')
-            ->get();
+        $agents = User::where(function ($query) {
+            $query->where('role', 'agent')
+                ->orWhere('role', 'sub agent');
+        })
+        ->where(function ($query) use ($moduleId) {
+            $query->whereJsonContains('module_permissions', (int)$moduleId)
+                  ->orWhereJsonContains('module_permissions', "$moduleId");
+        })
+        ->select('id', 'name', 'email', 'phone_num', 'role')
+        ->get();
 
         $products = Products::where('module_id', $moduleId)->get();
         $admins = User::where('role', 'admin')->get();
@@ -672,27 +681,6 @@ class LoanApplicationController extends Controller
             // Find the application
             $application = LoanApplications::findOrFail($applicationId);
             
-            // Validate the request
-            $validator = $request->validate([
-                'agent_id' => 'nullable|exists:users,id',
-                'document_checklist' => 'nullable|array',
-                'rates' => 'nullable|numeric',
-                'biro' => 'nullable|string',
-                'banca' => 'nullable|string',
-                'tenure_applied' => 'nullable|string',
-                'date_received' => 'nullable|date',
-                'amount_applied' => 'nullable|numeric',
-                'amount_approved' => 'nullable|numeric',
-                'amount_disbursed' => 'nullable|numeric',
-                'tenure_approved' => 'nullable|string',
-                'date_approved' => 'nullable|date',
-                'date_disbursed' => 'nullable|date',
-                'date_rejected' => 'nullable|date',
-                'product_id' => 'nullable|exists:products,id',
-                'fields' => 'nullable|array',
-                'for_admin' => 'nullable|exists:users,id',
-            ]);
-            
             // Get all validated fields that are present in the request
             $fieldsToUpdate = $request->only([
                 'rates', 'biro', 'banca', 'tenure_applied', 'date_received',
@@ -770,7 +758,7 @@ class LoanApplicationController extends Controller
     {
         try {
             // Check if user is admin
-            if (!Auth::check() || Auth::user()->role !== 'admin') {
+            if (!Auth::check() || Auth::user()->role !== 'admin' || Auth::user()->role !== 'superuser') {
                 return redirect()->back()->with('error', 'You do not have permission to delete applications.');
             }
             
@@ -809,11 +797,6 @@ class LoanApplicationController extends Controller
     public function destroySecond( $applicationId)
     {
         try {
-            // Check if user is admin
-            if (!Auth::check() || Auth::user()->role !== 'admin') {
-                return redirect()->back()->with('error', 'You do not have permission to delete applications.');
-            }
-            
             // Find the application
             $application = LoanApplications::findOrFail($applicationId);
 
@@ -951,7 +934,7 @@ class LoanApplicationController extends Controller
             $application->rates = null;
             $application->product_id = null;
             $application->tenure_applied = null;
-
+            $application->agent_id = null;
             $application->save();
 
 
@@ -977,7 +960,7 @@ class LoanApplicationController extends Controller
         $applications = LoanApplications::all();
 
         
-        $isAdmin = Auth::user()->role === 'admin';
+        $isAdmin = Auth::user()->role === 'admin' || Auth::user()->role === 'superuser';
 
         $permissions = [
             'create' => $isAdmin,
@@ -990,7 +973,7 @@ class LoanApplicationController extends Controller
             'error' => session('error'),
         ];
 
-        if(Auth::user()->role === 'admin'){
+        if(Auth::user()->role === 'admin' || Auth::user()->role === 'superuser'){
             // Get all applications for this module
             Log::info('Admin');
             $applications = LoanApplications::all()
