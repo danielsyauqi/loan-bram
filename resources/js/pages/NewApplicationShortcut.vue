@@ -137,15 +137,12 @@ onMounted(async () => {
             <p class="text-gray-500 dark:text-gray-400 truncate max-w-xs mb-4" :title="module.description">
                             {{ module.description.length > 50 ? module.description.slice(0, 50) + '...' : module.description }}
                         </p>               
-            <div class="grid grid-cols-2 gap-2 mb-6">
+            <div class="grid grid-cols-3 gap-2 mb-6">
               <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Interest Rate</p>
                 <p class="font-semibold text-gray-900 dark:text-white">{{ module.interestRate }}</p>
               </div>
-              <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Tenure</p>
-                <p class="font-semibold text-gray-900 dark:text-white">{{ module.tenure }}</p>
-              </div>
+        
               <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Min Amount</p>
                 <p class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(module.minAmount) }}</p>

@@ -307,7 +307,7 @@ const deleteForm = useForm({});
 
 const confirmDelete = () => {
   if (applicationToDelete.value) {
-    deleteForm.delete(route('loan-applications.destroySecond', { moduleSlug: props.moduleSlug, applicationId: applicationToDelete.value }), {
+    deleteForm.delete(route('loan-applications.destroySecond', {applicationId: applicationToDelete.value }), {
       onSuccess: () => {
         showDeleteModal.value = false;
         applicationToDelete.value = null;
@@ -357,7 +357,7 @@ onMounted(() => {
     }
 });
 
-
+console.log(props.applications);
 
 </script>
 

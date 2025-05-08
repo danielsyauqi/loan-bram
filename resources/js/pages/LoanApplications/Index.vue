@@ -274,7 +274,7 @@ onMounted(() => {
 const performDelete = () => {
     if (!applicationToDelete.value) return;
     
-    deleteForm.delete(route('loan-applications.destroy', { moduleSlug: props.module.slug, applicationId: applicationToDelete.value.id }), {
+    deleteForm.delete(route('loan-applications.destroy', { applicationId: applicationToDelete.value.id }), {
         onSuccess: () => {
             showDeleteModal.value = false;
             applicationToDelete.value = null;
@@ -320,10 +320,6 @@ const performDelete = () => {
                         <div class="text-sm sm:text-lg font-semibold text-gray-900 dark:text-white">
                             {{ formatCurrency(module.minAmount) }} - {{ formatCurrency(module.maxAmount) }}
                         </div>
-                    </div>
-                    <div>
-                        <div class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Tenure</div>
-                        <div class="text-sm sm:text-lg font-semibold text-gray-900 dark:text-white">{{ module.tenure }}</div>
                     </div>
                 </div>
             </div>

@@ -565,8 +565,9 @@ const submit = () => {
                                             required
                                         >
                                             <option value="admin">Admin</option>
-                                            <option value="agent">Agent</option>
                                             <option value="customer">Customer</option>
+                                            <option value="sub agent">Sub Agent</option>
+                                            <option value="agent">Agent</option>
                                         </select>
                                         <div v-if="form.errors.role" class="text-red-500 text-sm mt-1">{{ form.errors.role }}</div>
                                         <p v-else class="text-xs text-gray-600 dark:text-gray-400">

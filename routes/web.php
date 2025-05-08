@@ -28,8 +28,8 @@ Route::get('loan-modules/{moduleSlug}/applications/create', [LoanApplicationCont
 Route::post('loan-modules/{moduleSlug}/applications/create', [LoanApplicationController::class, 'create'])->middleware(['auth', 'verified']);
 Route::post('/loan-applications', [LoanApplicationController::class, 'store'])->middleware(['auth', 'verified'])->name('loan-applications.store');
 Route::get('/loan-applications/list', [LoanApplicationController::class, 'list'])->middleware(['auth', 'verified'])->name('loan-applications.list');
-Route::delete('/loan-applications/{moduleSlug}/{applicationId}', [LoanApplicationController::class, 'destroy'])->middleware(['auth', 'verified'])->name('loan-applications.destroy');
-Route::delete('/loan-applications/{moduleSlug}/{applicationId}', [LoanApplicationController::class, 'destroySecond'])->middleware(['auth', 'verified'])->name('loan-applications.destroySecond');
+Route::delete('/loan-applications/{applicationId}', [LoanApplicationController::class, 'destroy'])->middleware(['auth', 'verified'])->name('loan-applications.destroy');
+Route::delete('/loan-applications/{applicationId}', [LoanApplicationController::class, 'destroySecond'])->middleware(['auth', 'verified'])->name('loan-applications.destroySecond');
 Route::get('loan-modules/{moduleSlug}/applications/{referenceId}', [LoanApplicationController::class, 'show'])->middleware(['auth', 'verified'])->name('loan-modules.applications.show');
 Route::get('loan-modules/{moduleSlug}/applications/{applicationId}/edit', [LoanApplicationController::class, 'edit'])->middleware(['auth', 'verified'])->name('loan-modules.applications.edit');
 Route::post('loan-modules/{moduleSlug}/applications/{applicationId}/updateWorkflow/{workflowId}', [LoanApplicationController::class, 'updateWorkflow'])->middleware(['auth', 'verified'])->name('loan-modules.applications.updateWorkflow');

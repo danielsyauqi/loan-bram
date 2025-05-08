@@ -11,7 +11,6 @@ class LoanModules extends Model
     protected $primaryKey = 'id';
     
     protected $fillable = [
-        'admin_id',
         'name',
         'description',
         'logo',

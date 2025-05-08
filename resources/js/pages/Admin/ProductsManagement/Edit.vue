@@ -63,6 +63,8 @@ const form = useForm({
     minimum_loan: props.product.minimum_loan,
     maximum_loan: props.product.maximum_loan,
     rate: props.product.rate,
+    tenure_value: props.product.tenure ? props.product.tenure.split(' ')[0] : '',
+    tenure_unit: props.product.tenure ? props.product.tenure.split(' ')[1]?.toLowerCase() : 'days',
     tenure: props.product.tenure,
 });
 
@@ -74,10 +76,11 @@ const removeRate = (index: number) => {
     form.rate.splice(index, 1);
 };
 
+const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
 const submit = () => {
-    // Filter out empty requirements and features
     form.rate = form.rate.filter(rate => rate !== '');
+    form.tenure = `${form.tenure_value} ${capitalize(form.tenure_unit)}`;
     form.put(route('products.update', { moduleSlug: props.module.slug, productId: props.product.id }));
 };
 </script>
@@ -96,8 +99,8 @@ const submit = () => {
             <!-- Module Info Card -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
                 <div class="flex flex-col md:flex-row">
-                    <div class="md:w-1/4 p-4 flex justify-center items-center bg-gray-50 dark:bg-gray-700">
-                        <img :src="module.logo" :alt="module.name" class="h-32 w-32 object-cover rounded-lg" 
+                    <div class="md:w-1/4 p-4 flex justify-center items-center bg-white-50 dark:bg-gray-700">
+                        <img :src="module.logo" :alt="module.name" class="w-full h-32 object-contain rounded-lg" 
                              @error="(e: Event) => { 
                                 if (e.target) {
                                     (e.target as HTMLImageElement).src = '/storage/images/loan-modules/default.png';
@@ -135,7 +138,7 @@ const submit = () => {
                                     type="text" 
                                     id="name" 
                                     v-model="form.name" 
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                    class="px-2 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     required
                                 />
                                 <div v-if="form.errors.name" class="text-red-500 text-sm mt-1">{{ form.errors.name }}</div>
@@ -159,7 +162,7 @@ const submit = () => {
                                         type="number" 
                                         id="minimum_loan" 
                                         v-model="form.minimum_loan" 
-                                        class="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        class="pl-7 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         min="0"
                                         required
                                     />
@@ -178,7 +181,7 @@ const submit = () => {
                                         type="number" 
                                         id="maximum_loan" 
                                         v-model="form.maximum_loan" 
-                                        class="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        class="pl-7 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                         min="0"
                                         required
                                     />
@@ -222,15 +225,27 @@ const submit = () => {
                             
                             <!-- Tenure -->
                             <div>
-                                <label for="tenure" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tenure / Processing Time</label>
-                                <input 
-                                    type="text" 
-                                    id="tenure" 
-                                    v-model="form.tenure" 
-                                    placeholder="e.g. 2-3 business days"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                    required
-                                />
+                                <label for="tenure" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tenure</label>
+                                <div class="flex gap-2 mt-1">
+                                    <input 
+                                        type="text" 
+                                        id="tenure_value" 
+                                        v-model="form.tenure_value" 
+                                        placeholder="e.g. 2 or 3-4"
+                                        class="px-2 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        required
+                                    />
+                                    <select
+                                        v-model="form.tenure_unit"
+                                        class="px-2 py-2 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                        required
+                                    >
+                                        <option value="days">Days</option>
+                                        <option value="weeks">Weeks</option>
+                                        <option value="months">Months</option>
+                                        <option value="years">Years</option>
+                                    </select>
+                                </div>
                                 <div v-if="form.errors.tenure" class="text-red-500 text-sm mt-1">{{ form.errors.tenure }}</div>
                             </div>
                         </div>

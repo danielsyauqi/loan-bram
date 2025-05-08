@@ -74,6 +74,7 @@ const props = withDefaults(defineProps<{
         referenceId?: string;
     };
     autosaveNotifications?: boolean;
+    moduleSlug?: string;
 }>(), {
     moduleId: 0,
     module: () => ({
@@ -724,6 +725,44 @@ const saveApplication = (field = null, value = null) => {
     });
 };
 
+const changeModule = () => {
+
+    try {
+       // POST to the backend
+        axios.post(route('loan-modules.applications.module.post', {
+            moduleSlug: props.module.slug,
+            referenceId: props.application.reference_id,
+        }), {
+            module_id: form.module_id
+        })
+    .then(response => {
+        if (response.data.success) {
+            window.location.href = route('loan-modules.applications.show', { moduleSlug: response.data.moduleSlug, referenceId: props.application.reference_id });
+            toastMessage.value = 'Module saved successfully';
+            toastType.value = 'success';
+            showToast.value = true;
+        } else {
+            toastMessage.value = response.data.message || 'Failed to save changes';
+            toastType.value = 'error';
+            showToast.value = true;
+        }
+    })
+    .catch(error => {
+        console.error('Error saving application:', error);
+        toastMessage.value = 'Failed to save changes';
+        toastType.value = 'error';
+        showToast.value = true;
+    });
+
+    } catch (error) {
+        console.error('Error changing module:', error);
+        toastMessage.value = 'Failed to change module';
+        toastType.value = 'error';
+        showToast.value = true;
+    }
+    
+};
+
 
 
 
@@ -733,7 +772,7 @@ const saveApplication = (field = null, value = null) => {
     <Head :title="'Application Details'" />
 
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div v-if="userRole !== 'customer' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
+        <div v-if="userRole === 'admin' && userStatus !== 'not active'" class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
             <!-- Header -->
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
@@ -761,25 +800,34 @@ const saveApplication = (field = null, value = null) => {
                         </h3>
 
                         <div>
-                            <label for="module_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Loan Product
                             </label>
-                            <select 
-                                v-model="form.module_id"
-                                id="module_id" 
-                                name="module_id"
-                                class="px-2 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
-                                :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.module_id }"
-                            >
-                                <option value="">Select a module</option>
-                                <option 
-                                    v-for="module in props.allModules" 
-                                    :key="module.id" 
-                                    :value="module.id"
+                            <div class="flex items-center gap-2">
+                                <select 
+                                    v-model="form.module_id"
+                                    id="module_id" 
+                                    name="module_id"
+                                    class="px-2 py-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"
+                                    :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.module_id }"
                                 >
-                                    {{ module.name }}
-                                </option>
-                            </select>
+                                    <option value="">Select a module</option>
+                                    <option 
+                                        v-for="module in props.allModules" 
+                                        :key="module.id" 
+                                        :value="module.id"
+                                    >
+                                        {{ module.name }}
+                                    </option>
+                                </select>
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 dark:bg-gray-700 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-gray-600 transition"
+                                    @click="changeModule"
+                                >
+                                    Change
+                                </button>
+                            </div>
                             <p v-if="form.errors.module_id" class="mt-1 text-sm text-red-600 dark:text-red-400">
                                 {{ form.errors.module_id }}
                             </p>
@@ -1031,7 +1079,7 @@ const saveApplication = (field = null, value = null) => {
                                                 :key="product.id" 
                                                 :value="product.id"
                                             >
-                                                {{ product.name }} ({{ product.tenure }} Years)
+                                                {{ product.name }} ({{ product.tenure }})
                                             </option>
                                         </select>
                                         <p v-if="form.errors.product_id" class="mt-1 text-sm text-red-600 dark:text-red-400">
@@ -1174,7 +1222,7 @@ const saveApplication = (field = null, value = null) => {
                                         </label>
                                         <div class="mt-1">
                                         <input 
-                                            type="number" 
+                                            type="text" 
                                                 id="tenure_applied"
                                                 readonly 
                                                 v-model="form.tenure_applied"
@@ -1585,10 +1633,7 @@ const saveApplication = (field = null, value = null) => {
                             <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ formatCurrency(module.maxAmount) }}</div>
                         </div>
                         
-                        <div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">Tenure</div>
-                            <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ module.tenure }}</div>
-                        </div>
+
                         
                         <div>
                             <div class="text-sm text-gray-500 dark:text-gray-400">Interest Rate</div>
@@ -1761,7 +1806,7 @@ const saveApplication = (field = null, value = null) => {
         </div>
         <div v-else class="flex h-full flex-1 flex-col gap-6 rounded-xl p-6 bg-gray-50 dark:bg-gray-900">
             <div class="text-center py-12">
-                <h1 class="text-2xl font-semibold text-gray-800 dark:text-white">You are not authorized to view this page</h1>
+                <div class="text-gray-500 dark:text-gray-400">You are not authorized to access this page.</div>
             </div>
         </div>
     </AppLayout>

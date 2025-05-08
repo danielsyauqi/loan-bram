@@ -148,10 +148,6 @@ onMounted(() => {
                 <p class="font-semibold text-gray-900 dark:text-white">{{ module.interestRate }}</p>
               </div>
               <div>
-                <p class="text-sm text-gray-500 dark:text-gray-400">Tenure</p>
-                <p class="font-semibold text-gray-900 dark:text-white">{{ module.tenure }}</p>
-              </div>
-              <div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Min Amount</p>
                 <p class="font-semibold text-gray-900 dark:text-white">{{ formatCurrency(module.minAmount) }}</p>
               </div>

@@ -217,7 +217,7 @@ class UserManagementController extends Controller
             'phone_num' => 'required|string|max:20',
             'bank_name' => 'nullable|string|max:255',
             'bank_account' => 'nullable|string|max:255',
-            'role' => 'required|string|in:admin,agent,customer',
+            'role' => 'required|string|in:admin,agent,customer,sub agent',
             'status' => 'required|string|in:active,inactive',
             'ic_num' => 'required|string|max:20',
             'address_line_1' => 'required|string|max:255',
@@ -304,7 +304,7 @@ class UserManagementController extends Controller
             
             // Delete workflow remarks for each loan application
             foreach ($loanApplications as $application) {
-                WorkflowRemarks::where('loan_application_id', $application->id)->delete();
+                WorkflowRemarks::where('application_id', $application->id)->delete();
             }
             
             // Then delete the loan applications

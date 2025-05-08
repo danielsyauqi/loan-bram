@@ -508,8 +508,17 @@ class LoanApplicationController extends Controller
         //Workflow remarks
         $workflow_remarks = WorkflowRemarks::where('application_id', $application->id)->get();
         // Fetch all users with role 'Agent' to populate the agent selection dropdown
-        $agents = User::where('role', 'agent')
-            ->orWhere('role', 'sub agent')
+
+
+        // Retrieve agents who have permission for the current module
+        $agents = User::where(function ($query) {
+                $query->where('role', 'agent')
+                    ->orWhere('role', 'sub agent');
+            })
+            ->where(function ($query) use ($moduleId) {
+                $query->whereJsonContains('module_permissions', (int)$moduleId)
+                      ->orWhereJsonContains('module_permissions', "$moduleId");
+            })
             ->select('id', 'name', 'email', 'phone_num', 'role')
             ->get();
 
@@ -556,6 +565,7 @@ class LoanApplicationController extends Controller
             'flash' => session()->get('flash') ?? null,
             'success' => session()->get('success') ?? null,
             'admins' => $admins,
+            'moduleSlug' => $module->slug,
         ]);
     }
 
@@ -669,12 +679,12 @@ class LoanApplicationController extends Controller
                 'rates' => 'nullable|numeric',
                 'biro' => 'nullable|string',
                 'banca' => 'nullable|string',
-                'tenure_applied' => 'nullable|numeric',
+                'tenure_applied' => 'nullable|string',
                 'date_received' => 'nullable|date',
                 'amount_applied' => 'nullable|numeric',
                 'amount_approved' => 'nullable|numeric',
                 'amount_disbursed' => 'nullable|numeric',
-                'tenure_approved' => 'nullable|numeric',
+                'tenure_approved' => 'nullable|string',
                 'date_approved' => 'nullable|date',
                 'date_disbursed' => 'nullable|date',
                 'date_rejected' => 'nullable|date',
@@ -756,7 +766,7 @@ class LoanApplicationController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($moduleSlug, $applicationId)
+    public function destroy($applicationId)
     {
         try {
             // Check if user is admin
@@ -796,7 +806,7 @@ class LoanApplicationController extends Controller
         }
     }
 
-    public function destroySecond($moduleSlug, $applicationId)
+    public function destroySecond( $applicationId)
     {
         try {
             // Check if user is admin
@@ -929,26 +939,36 @@ class LoanApplicationController extends Controller
         try {
             // Find the application
             $application = LoanApplications::where('reference_id', $referenceId)->first();
-            
+            $moduleSlug = LoanModules::where('id', $request->module_id)->first()->slug;
+
             // Validate the request
             $request->validate([
                 'module_id' => 'required|exists:loan_modules,id',
             ]);
-            
+
             // Update the module_id field
             $application->module_id = $request->module_id;
+            $application->rates = null;
+            $application->product_id = null;
+            $application->tenure_applied = null;
 
             $application->save();
 
-            Log::info($request->module_id);
-            
-            return redirect()->route('loan-modules.applications.show', [    
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Module changed successfully',
                 'moduleSlug' => $moduleSlug,
-                'referenceId' => $application->reference_id
             ]);
         } catch (\Exception $e) {
-            Log::error('Post module error: ' . $e->getMessage());
-            
+            Log::error('Post module error', [
+                'error' => $e->getMessage(),
+                'reference_id' => $referenceId,
+                'user_id' => Auth::user()->id,
+                'timestamp' => now()->toDateTimeString(),
+                'request_data' => $request->all(),
+            ]);
+
             return redirect()->back()->with('error', 'An error occurred while posting the module');
         }
     }

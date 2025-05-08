@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Models\LoanModules as LoanModulesModel;
-use Inertia\Inertia;
 use App\Models\User;
+use Inertia\Inertia;
+use Illuminate\Http\Request;
+use App\Models\LoanApplications;
+use App\Models\LoanModules as LoanModulesModel;
 
 class LoanModulesList extends Controller
 {
@@ -44,10 +45,7 @@ class LoanModulesList extends Controller
             $products = $module->products()->get();
             
             // Count total applications across all products
-            $totalApplications = 0;
-            foreach ($products as $product) {
-                $totalApplications += $product->loanApplications()->count();
-            }
+            $totalApplications = LoanApplications::where('module_id', $module->id)->count();
 
 
             

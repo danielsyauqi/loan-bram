@@ -294,8 +294,10 @@ class NotificationController extends Controller
 
         if($application){
 
-            if($user->role === 'customer' || $user->role === 'agent' || $user->role === 'subagent'){
+            if($user->role === 'customer' || $user->role === 'agent' || $user->role === 'sub agent'){
+                Log::info('Done');
                 return redirect()->route('customer.application.show', [$referenceId]);
+
             }else{
 
                 if($application->module_id){

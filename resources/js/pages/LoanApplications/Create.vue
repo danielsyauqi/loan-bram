@@ -690,11 +690,6 @@ function formatICNumberInput(event: Event) {
                                 </div>
                                 
                                 <div>
-                                    <div class="text-sm text-gray-500 dark:text-gray-400">Tenure</div>
-                                    <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ module.tenure }}</div>
-                                </div>
-                                
-                                <div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400">Interest Rate</div>
                                     <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ module.interestRate }}</div>
                                 </div>
